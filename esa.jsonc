@@ -1,9 +1,14 @@
 {
   // 阿里云 ESA Pages 部署配置
-  // 文档: https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/pages
   "build": {
     "command": "npm run build",
     "output": "dist"
+  },
+  "assets": {
+    "directory": "dist"
+  },
+  "functions": {
+    "directory": "functions"
   },
   "routes": [
     // 公开 API
