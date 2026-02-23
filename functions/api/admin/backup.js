@@ -8,6 +8,7 @@ const BACKUP_KEYS = [
   'categories',
   'images:index',
   'navlinks',
+  'nav:links',
   'comments:index'
 ]
 
