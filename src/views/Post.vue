@@ -213,7 +213,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.post-page { min-height: 100vh; display: flex; flex-direction: column; }
+.post-page { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow-x: hidden; }
 .article { max-width: 780px; padding-top: 2rem; padding-bottom: 4rem; flex: 1; }
 .article-header { margin-bottom: 2rem; }
 .article-meta { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
@@ -270,6 +270,15 @@ onMounted(async () => {
 .lightbox-close:hover { background: rgba(255,255,255,0.3); }
 .lightbox-enter-active, .lightbox-leave-active { transition: opacity 0.25s; }
 .lightbox-enter-from, .lightbox-leave-to { opacity: 0; }
+
+@media (max-width: 768px) {
+  .article { padding-top: 1.2rem; padding-bottom: 2rem; }
+  .article-header h1 { font-size: 1.5rem; }
+  .article-summary { font-size: 0.9rem; }
+  .article-meta { gap: 0.6rem; }
+  .comment-form { padding: 1rem; }
+  .captcha-row { flex-wrap: wrap; }
+}
 </style>
 
 <style>
@@ -280,7 +289,7 @@ onMounted(async () => {
 .markdown-body p { margin-bottom: 1.2rem; }
 .markdown-body a { color: var(--accent); border-bottom: 1px solid transparent; transition: border-color 0.3s; }
 .markdown-body a:hover { border-bottom-color: var(--accent); }
-.markdown-body img { border-radius: var(--radius-sm); margin: 1.5rem 0; cursor: zoom-in; transition: opacity 0.2s; }
+.markdown-body img { border-radius: var(--radius-sm); margin: 1.5rem 0; cursor: zoom-in; transition: opacity 0.2s; max-width: 100%; height: auto; }
 .markdown-body img:hover { opacity: 0.9; }
 .markdown-body pre { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.2rem; overflow-x: auto; margin: 1.5rem 0; }
 .markdown-body code { font-size: 0.85em; font-family: 'Fira Code', monospace; }
