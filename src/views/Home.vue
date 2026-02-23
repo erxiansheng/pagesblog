@@ -96,7 +96,7 @@
               </div>
             </div>
           </div>
-          <div class="sheet-body" ref="sheetBodyRef" @wheel="onSheetWheel" @scroll="onSheetScroll" @mousedown="onSheetDragStart" @mousemove="onSheetDragMove" @mouseup="onSheetDragEnd" @mouseleave="onSheetDragEnd">
+          <div class="sheet-body" ref="sheetBodyRef" @scroll="onSheetScroll" @mousedown="onSheetDragStart" @mousemove="onSheetDragMove" @mouseup="onSheetDragEnd" @mouseleave="onSheetDragEnd">
             <Transition name="fade" mode="out-in">
               <div v-if="sheetPosts.length" class="posts-grid" key="posts">
                 <TransitionGroup name="card-fade" tag="div" class="posts-grid-inner">
@@ -198,12 +198,25 @@ function clearSearch() {
 
 watch(currentCategory, () => loadSheetPosts(true))
 watch(showAllArticles, (val) => {
-  if (val) loadSheetPosts(true)
+  if (val) {
+    loadSheetPosts(true)
+    nextTick(() => {
+      if (sheetBodyRef.value) {
+        sheetBodyRef.value.addEventListener('wheel', onSheetWheel, { passive: false })
+      }
+    })
+  } else {
+    if (sheetBodyRef.value) {
+      sheetBodyRef.value.removeEventListener('wheel', onSheetWheel)
+    }
+  }
 })
 
 // Sheet body horizontal scroll, drag & infinite scroll
 const sheetBodyRef = ref(null)
 let isDragging = false, dragStartX = 0, dragScrollLeft = 0
+let scrollRafId = null
+let lastDragX = 0, lastDragTime = 0, dragVelocity = 0, momentumRafId = null
 
 function onSheetWheel(e) {
   const el = sheetBodyRef.value
@@ -214,19 +227,26 @@ function onSheetWheel(e) {
   }
 }
 function onSheetScroll() {
-  const el = sheetBodyRef.value
-  if (!el) return
-  // 当滚动到距离右边 200px 以内时加载下一页
-  if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 200) {
-    loadSheetPosts()
-  }
+  if (scrollRafId) return
+  scrollRafId = requestAnimationFrame(() => {
+    scrollRafId = null
+    const el = sheetBodyRef.value
+    if (!el) return
+    if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 200) {
+      loadSheetPosts()
+    }
+  })
 }
 function onSheetDragStart(e) {
   const el = sheetBodyRef.value
   if (!el) return
+  if (momentumRafId) { cancelAnimationFrame(momentumRafId); momentumRafId = null }
   isDragging = true
   dragStartX = e.pageX - el.offsetLeft
   dragScrollLeft = el.scrollLeft
+  lastDragX = e.pageX
+  lastDragTime = Date.now()
+  dragVelocity = 0
   el.style.cursor = 'grabbing'
   el.style.userSelect = 'none'
 }
@@ -237,11 +257,31 @@ function onSheetDragMove(e) {
   e.preventDefault()
   const x = e.pageX - el.offsetLeft
   el.scrollLeft = dragScrollLeft - (x - dragStartX)
+  // 计算速度用于惯性
+  const now = Date.now()
+  const dt = now - lastDragTime
+  if (dt > 0) {
+    dragVelocity = (lastDragX - e.pageX) / dt
+    lastDragX = e.pageX
+    lastDragTime = now
+  }
 }
 function onSheetDragEnd() {
+  if (!isDragging) return
   isDragging = false
   const el = sheetBodyRef.value
   if (el) { el.style.cursor = ''; el.style.userSelect = '' }
+  // 惯性滚动
+  if (Math.abs(dragVelocity) > 0.3) {
+    let v = dragVelocity * 16 // 转换为 px/frame
+    function momentumStep() {
+      if (!el || Math.abs(v) < 0.5) { momentumRafId = null; return }
+      el.scrollLeft += v
+      v *= 0.95 // 摩擦系数
+      momentumRafId = requestAnimationFrame(momentumStep)
+    }
+    momentumRafId = requestAnimationFrame(momentumStep)
+  }
 }
 
 function onProgress(pct) { progress.value = pct }
@@ -469,13 +509,22 @@ onMounted(async () => {
 
 .sheet-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: flex-end; }
 .sheet-panel {
-  background: rgba(14,14,20,0.35); backdrop-filter: blur(32px) saturate(1.6);
-  -webkit-backdrop-filter: blur(32px) saturate(1.6); border-top: 1px solid rgba(255,255,255,0.1);
+  position: relative;
+  border-top: 1px solid rgba(255,255,255,0.1);
   border-radius: 20px 20px 0 0; max-height: 80vh; display: flex; flex-direction: column;
-  animation: sheetUp 0.4s var(--ease);
+  animation: sheetUp 0.4s var(--ease); isolation: isolate;
+}
+.sheet-panel::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: rgba(14,14,20,0.35); backdrop-filter: blur(32px) saturate(1.6);
+  -webkit-backdrop-filter: blur(32px) saturate(1.6);
+  border-radius: 20px 20px 0 0; pointer-events: none;
 }
 :global(html.light) .sheet-panel {
-  background: rgba(245,243,239,0.4); border-top: 1px solid rgba(0,0,0,0.08);
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+:global(html.light) .sheet-panel::before {
+  background: rgba(245,243,239,0.4);
 }
 @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .sheet-handle { display: flex; justify-content: center; padding: 0.8rem 0 0.4rem; cursor: pointer; }
@@ -528,9 +577,14 @@ onMounted(async () => {
 .category-tabs button:hover, .category-tabs button.active { background: rgba(201,169,110,0.2); border-color: var(--accent); color: #8b6c35; font-weight: 600; }
 :global(html.light) .category-tabs button.active,
 :global(html.light) .category-tabs button:hover { color: #7a5e2a; background: rgba(160,125,63,0.18); }
-.sheet-body { flex: 1; overflow-x: auto; overflow-y: hidden; padding: 0 2rem 1rem; background: transparent; cursor: grab; scrollbar-width: none; }
+.sheet-body {
+  flex: 1; overflow-x: auto; overflow-y: hidden; padding: 0 2rem 1rem;
+  background: transparent; cursor: grab; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  contain: layout style paint;
+}
 .sheet-body::-webkit-scrollbar { display: none; }
-.posts-grid { display: flex; gap: 1.2rem; flex-wrap: nowrap; padding-bottom: 0.5rem; align-items: stretch; }
+.posts-grid { display: flex; gap: 1.2rem; flex-wrap: nowrap; padding-bottom: 0.5rem; align-items: stretch; will-change: transform; }
 .posts-grid > * { flex-shrink: 0; }
 .posts-grid-inner > * { width: 300px; min-width: 300px; flex-shrink: 0; }
 .sheet-footer { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-top: 1px solid var(--border); flex-shrink: 0; background: transparent; border-radius: 0 0 0 0; }

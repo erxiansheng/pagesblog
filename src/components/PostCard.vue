@@ -27,15 +27,16 @@ const formatDate = (ts) => {
 .post-card {
   display: flex; flex-direction: column; background: var(--bg-surface);
   border: 1px solid var(--border); border-radius: var(--radius);
-  overflow: hidden; transition: all 0.35s var(--ease); position: relative;
+  overflow: hidden; transition: border-color 0.35s var(--ease), transform 0.35s var(--ease);
+  position: relative; will-change: transform; transform: translateZ(0);
 }
 .post-card:hover {
-  background: var(--bg-surface); border-color: var(--border-hover);
-  transform: translateY(-4px);
+  border-color: var(--border-hover);
+  transform: translateY(-4px) translateZ(0);
 }
 .card-cover { height: 200px; overflow: hidden; }
-.card-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s var(--ease); }
-.post-card:hover .card-cover img { transform: scale(1.05); }
+.card-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s var(--ease); will-change: transform; transform: translateZ(0); }
+.post-card:hover .card-cover img { transform: scale(1.05) translateZ(0); }
 .card-body { padding: 1.2rem 1.4rem; flex: 1; display: flex; flex-direction: column; gap: 0.5rem; }
 .card-meta { display: flex; align-items: center; gap: 0.8rem; font-size: 0.7rem; }
 .card-category {
