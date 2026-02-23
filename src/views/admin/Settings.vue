@@ -190,7 +190,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { marked } from 'marked'
 import Loading from '../../components/Loading.vue'
-import { getSiteSettings, saveSettings, uploadImage, exportBackup, importBackup } from '../../api'
+import { getSiteSettings, saveSettings, uploadImage, getBackupKeys, getBackupBatch, restoreBackupBatch } from '../../api'
 
 const loading = ref(true)
 const saving = ref(false)
@@ -352,15 +352,30 @@ async function handleExport() {
   backupMsg.value = ''
   backupIsError.value = false
   try {
-    const data = await exportBackup()
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    // 第一步：获取所有需要备份的 key 列表
+    backupMsg.value = '正在获取数据列表...'
+    const { keys } = await getBackupKeys()
+    if (!keys || !keys.length) throw new Error('没有可备份的数据')
+
+    // 第二步：分批读取数据（每批 5 个 key）
+    const BATCH = 5
+    const allData = {}
+    for (let i = 0; i < keys.length; i += BATCH) {
+      const batch = keys.slice(i, i + BATCH)
+      backupMsg.value = `正在导出数据 ${Math.min(i + BATCH, keys.length)}/${keys.length}...`
+      const res = await getBackupBatch(batch)
+      Object.assign(allData, res.data)
+    }
+
+    const backup = { version: 2, createdAt: new Date().toISOString(), data: allData }
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = `blog-backup-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
-    backupMsg.value = '备份文件已下载'
+    backupMsg.value = `备份完成，共导出 ${keys.length} 个数据项`
   } catch (e) {
     backupMsg.value = '备份失败: ' + e.message
     backupIsError.value = true
@@ -377,10 +392,25 @@ async function handleImport(e) {
   backupIsError.value = false
   try {
     const text = await file.text()
-    const data = JSON.parse(text)
-    if (!data.data) throw new Error('无效的备份文件格式')
-    const res = await importBackup(data)
-    backupMsg.value = `恢复成功，已恢复 ${res.restoredKeys} 个数据项，刷新页面生效`
+    const backup = JSON.parse(text)
+    if (!backup.data) throw new Error('无效的备份文件格式')
+
+    const keys = Object.keys(backup.data)
+    if (!keys.length) throw new Error('备份文件中没有数据')
+
+    // 分批恢复（每批 3 个 key，避免阿里云 KV 调用限制）
+    const BATCH = 3
+    let restored = 0
+    for (let i = 0; i < keys.length; i += BATCH) {
+      const batchKeys = keys.slice(i, i + BATCH)
+      const batchData = {}
+      batchKeys.forEach(k => { batchData[k] = backup.data[k] })
+      backupMsg.value = `正在恢复数据 ${Math.min(i + BATCH, keys.length)}/${keys.length}...`
+      await restoreBackupBatch(batchData)
+      restored += batchKeys.length
+    }
+
+    backupMsg.value = `恢复成功，已恢复 ${restored} 个数据项，刷新页面生效`
   } catch (e) {
     backupMsg.value = '恢复失败: ' + e.message
     backupIsError.value = true

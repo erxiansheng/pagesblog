@@ -11,83 +11,81 @@ const BACKUP_KEYS = [
   'comments:index'
 ]
 
-// GET: 导出备份数据
+// GET: 导出备份数据（支持分批：?keys=key1,key2,... 或不传则返回所有 key 列表）
 export async function onRequestGet({ request }) {
   try {
     await requireAuth(request)
     const kv = getKV()
-    const backup = { version: 2, createdAt: new Date().toISOString(), data: {} }
+    const url = new URL(request.url)
+    const keysParam = url.searchParams.get('keys')
 
-    // 备份基础键
-    for (const key of BACKUP_KEYS) {
-      const val = await kv.get(key)
-      if (val) backup.data[key] = val
+    // 分批模式：只读取指定的 keys
+    if (keysParam) {
+      const keys = keysParam.split(',').filter(Boolean)
+      const data = {}
+      for (const key of keys) {
+        const val = await kv.get(key)
+        if (val) data[key] = val
+      }
+      return json({ data })
     }
 
-    // 备份每篇文章的完整内容
+    // 默认模式：返回所有需要备份的 key 列表（不含数据）
+    const allKeys = [...BACKUP_KEYS]
+
+    // 收集文章 keys
     const indexStr = await kv.get('posts:index')
     if (indexStr) {
       const posts = JSON.parse(indexStr)
       for (const p of posts) {
-        const postData = await kv.get(`post:${p.id}`)
-        if (postData) backup.data[`post:${p.id}`] = postData
+        allKeys.push(`post:${p.id}`)
       }
     }
 
-    // 备份所有图片/模型文件（base64 数据 + metadata + 分块）
+    // 收集图片 keys
     const imagesIndexStr = await kv.get('images:index')
     if (imagesIndexStr) {
       const images = JSON.parse(imagesIndexStr)
       for (const img of images) {
         const fn = img.filename
-        // 读取 metadata
+        allKeys.push(`image:${fn}`)
+        allKeys.push(`image_meta:${fn}`)
+        // 检查是否分块
         const metaStr = await kv.get(`image_meta:${fn}`)
         if (metaStr) {
-          backup.data[`image_meta:${fn}`] = metaStr
-          const meta = JSON.parse(metaStr)
-          if (meta.chunked && meta.totalChunks) {
-            // 分块存储：备份主 key + 所有 chunks
-            const mainVal = await kv.get(`image:${fn}`)
-            if (mainVal) backup.data[`image:${fn}`] = mainVal
-            for (let i = 0; i < meta.totalChunks; i++) {
-              const chunk = await kv.get(`image:${fn}:chunk:${i}`)
-              if (chunk) backup.data[`image:${fn}:chunk:${i}`] = chunk
+          try {
+            const meta = JSON.parse(metaStr)
+            if (meta.chunked && meta.totalChunks) {
+              for (let i = 0; i < meta.totalChunks; i++) {
+                allKeys.push(`image:${fn}:chunk:${i}`)
+              }
             }
-          } else {
-            // 非分块：直接备份 base64
-            const val = await kv.get(`image:${fn}`)
-            if (val) backup.data[`image:${fn}`] = val
-          }
-        } else {
-          // 没有 meta 也尝试备份主数据
-          const val = await kv.get(`image:${fn}`)
-          if (val) backup.data[`image:${fn}`] = val
+          } catch (e) { /* ignore */ }
         }
       }
     }
 
-    return json(backup)
+    return json({ keys: allKeys })
   } catch (e) {
     if (e.message === 'Unauthorized') return error('未授权', 401)
     return error(e.message, 500)
   }
 }
 
-// POST: 恢复备份数据
+// POST: 恢复备份数据（分批写入，每次最多 5 个 key）
 export async function onRequestPost({ request }) {
   try {
     await requireAuth(request)
     const kv = getKV()
-    const backup = await request.json()
+    const body = await request.json()
 
-    if (!backup || !backup.data) {
-      return error('无效的备份文件', 400)
+    if (!body || !body.data) {
+      return error('无效的备份数据', 400)
     }
 
-    // 写入所有备份的键值对
-    const keys = Object.keys(backup.data)
+    const keys = Object.keys(body.data)
     for (const key of keys) {
-      await kv.put(key, backup.data[key])
+      await kv.put(key, body.data[key])
     }
 
     return json({ success: true, restoredKeys: keys.length })

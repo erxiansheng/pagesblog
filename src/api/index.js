@@ -74,8 +74,9 @@ export const deleteImage = (filename) => request('/admin/images', {
   method: 'POST', body: JSON.stringify({ filename })
 })
 
-// Backup & Restore
-export const exportBackup = () => request('/admin/backup')
-export const importBackup = (data) => request('/admin/backup', {
-  method: 'POST', body: JSON.stringify(data)
+// Backup & Restore (分批)
+export const getBackupKeys = () => request('/admin/backup')
+export const getBackupBatch = (keys) => request(`/admin/backup?keys=${encodeURIComponent(keys.join(','))}`)
+export const restoreBackupBatch = (data) => request('/admin/backup', {
+  method: 'POST', body: JSON.stringify({ data })
 })
