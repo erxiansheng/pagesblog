@@ -9,14 +9,24 @@ function createAliyunKVWrapper(ns) {
   const kv = new EdgeKV({ namespace: ns })
   return {
     async get(key) {
-      const val = await kv.get(key, { type: 'text' })
-      return val === undefined ? null : val
+      try {
+        const val = await kv.get(key, { type: 'text' })
+        return val === undefined || val === null ? null : val
+      } catch (e) {
+        // 阿里云 EdgeKV 在 key 不存在时会抛异常，视为 null
+        return null
+      }
     },
     async put(key, value) {
       return kv.put(key, value)
     },
     async delete(key) {
-      return kv.delete(key)
+      try {
+        return await kv.delete(key)
+      } catch (e) {
+        // key 不存在时删除可能也会抛异常，忽略
+        return null
+      }
     }
   }
 }
