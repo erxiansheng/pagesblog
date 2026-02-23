@@ -1,0 +1,16 @@
+{
+  "build": {
+    "command": "chmod +x node_modules/.bin/vite && npm run build",
+    "output": "dist"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "namespace": "blog_data"
+    }
+  ],
+  "routes": {
+    "/api/*": "functions",
+    "/uploads/*": "functions"
+  }
+}
