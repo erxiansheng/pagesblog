@@ -24,49 +24,64 @@ import adminNavlinksHandler from './api/admin/navlinks.js'
 
 import uploadsHandler from './uploads/[filename].js'
 
-// 路由表：[pattern, handler]
-// 顺序重要：更具体的路径放前面
-const routes = [
-  // 管理 API（带动态参数的放前面）
+// 路由表：路径前缀精确匹配
+const exactRoutes = {
+  '/api/posts': postsHandler,
+  '/api/categories': categoriesHandler,
+  '/api/settings': settingsHandler,
+  '/api/navlinks': navlinksHandler,
+  '/api/comments': commentsHandler,
+  '/api/captcha': captchaHandler,
+  '/api/admin/login': adminLoginHandler,
+  '/api/admin/settings': adminSettingsHandler,
+  '/api/admin/posts': adminPostsHandler,
+  '/api/admin/categories': adminCategoriesHandler,
+  '/api/admin/comments': adminCommentsHandler,
+  '/api/admin/images': adminImagesHandler,
+  '/api/admin/upload': adminUploadHandler,
+  '/api/admin/stats': adminStatsHandler,
+  '/api/admin/backup': adminBackupHandler,
+  '/api/admin/navlinks': adminNavlinksHandler,
+}
+
+// 动态路由：[pattern, handler]
+const dynamicRoutes = [
   [/^\/api\/admin\/posts\/([^/]+)$/, adminPostByIdHandler],
   [/^\/api\/admin\/categories\/([^/]+)$/, adminCategoryByNameHandler],
-  [/^\/api\/admin\/login$/, adminLoginHandler],
-  [/^\/api\/admin\/settings$/, adminSettingsHandler],
-  [/^\/api\/admin\/posts$/, adminPostsHandler],
-  [/^\/api\/admin\/categories$/, adminCategoriesHandler],
-  [/^\/api\/admin\/comments$/, adminCommentsHandler],
-  [/^\/api\/admin\/images$/, adminImagesHandler],
-  [/^\/api\/admin\/upload$/, adminUploadHandler],
-  [/^\/api\/admin\/stats$/, adminStatsHandler],
-  [/^\/api\/admin\/backup$/, adminBackupHandler],
-  [/^\/api\/admin\/navlinks$/, adminNavlinksHandler],
-
-  // 公开 API（带动态参数的放前面）
   [/^\/api\/posts\/([^/]+)$/, postByIdHandler],
-  [/^\/api\/posts$/, postsHandler],
-  [/^\/api\/categories$/, categoriesHandler],
-  [/^\/api\/settings$/, settingsHandler],
-  [/^\/api\/navlinks$/, navlinksHandler],
-  [/^\/api\/comments$/, commentsHandler],
-  [/^\/api\/captcha$/, captchaHandler],
-
-  // 文件服务
   [/^\/uploads\/([^/]+)$/, uploadsHandler],
 ]
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url)
-    const pathname = url.pathname
+    // 去掉末尾斜杠
+    const pathname = url.pathname.replace(/\/$/, '') || '/'
 
-    for (const [pattern, handler] of routes) {
-      const match = pathname.match(pattern)
-      if (match) {
+    // 1. 精确匹配
+    const exactHandler = exactRoutes[pathname]
+    if (exactHandler) {
+      return exactHandler.fetch(request, env)
+    }
+
+    // 2. 动态路由匹配
+    for (const [pattern, handler] of dynamicRoutes) {
+      if (pattern.test(pathname)) {
         return handler.fetch(request, env)
       }
     }
 
-    // 未匹配到任何路由，返回 404
-    return new Response('Not Found', { status: 404 })
+    // 3. 非 API/uploads 路径，不处理（交给静态资源）
+    if (!pathname.startsWith('/api/') && !pathname.startsWith('/uploads/')) {
+      return new Response(null, { status: 404 })
+    }
+
+    return new Response(JSON.stringify({ error: 'Not Found' }), {
+      status: 404,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    })
   }
 }
