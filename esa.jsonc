@@ -8,33 +8,28 @@
     "directory": "dist"
   },
   "functions": {
-    "directory": "functions"
-  },
-  "routes": [
-    // 公开 API
-    { "src": "/api/posts", "dest": "functions/api/posts.js" },
-    { "src": "/api/posts/:id", "dest": "functions/api/posts/[id].js" },
-    { "src": "/api/categories", "dest": "functions/api/categories.js" },
-    { "src": "/api/settings", "dest": "functions/api/settings.js" },
-    { "src": "/api/navlinks", "dest": "functions/api/navlinks.js" },
-    { "src": "/api/comments", "dest": "functions/api/comments.js" },
-    { "src": "/api/captcha", "dest": "functions/api/captcha.js" },
-
-    // 管理 API
-    { "src": "/api/admin/login", "dest": "functions/api/admin/login.js" },
-    { "src": "/api/admin/settings", "dest": "functions/api/admin/settings.js" },
-    { "src": "/api/admin/posts", "dest": "functions/api/admin/posts.js" },
-    { "src": "/api/admin/posts/:id", "dest": "functions/api/admin/posts/[id].js" },
-    { "src": "/api/admin/categories", "dest": "functions/api/admin/categories.js" },
-    { "src": "/api/admin/categories/:name", "dest": "functions/api/admin/categories/[name].js" },
-    { "src": "/api/admin/comments", "dest": "functions/api/admin/comments.js" },
-    { "src": "/api/admin/images", "dest": "functions/api/admin/images.js" },
-    { "src": "/api/admin/upload", "dest": "functions/api/admin/upload.js" },
-    { "src": "/api/admin/stats", "dest": "functions/api/admin/stats.js" },
-    { "src": "/api/admin/backup", "dest": "functions/api/admin/backup.js" },
-    { "src": "/api/admin/navlinks", "dest": "functions/api/admin/navlinks.js" },
-
-    // 文件服务（图片/模型）
-    { "src": "/uploads/:filename", "dest": "functions/uploads/[filename].js" }
-  ]
+    "directory": "functions",
+    "routes": [
+      { "pattern": "/api/posts", "module": "api/posts.js" },
+      { "pattern": "/api/posts/*", "module": "api/posts/[id].js" },
+      { "pattern": "/api/categories", "module": "api/categories.js" },
+      { "pattern": "/api/settings", "module": "api/settings.js" },
+      { "pattern": "/api/navlinks", "module": "api/navlinks.js" },
+      { "pattern": "/api/comments", "module": "api/comments.js" },
+      { "pattern": "/api/captcha", "module": "api/captcha.js" },
+      { "pattern": "/api/admin/login", "module": "api/admin/login.js" },
+      { "pattern": "/api/admin/settings", "module": "api/admin/settings.js" },
+      { "pattern": "/api/admin/posts", "module": "api/admin/posts.js" },
+      { "pattern": "/api/admin/posts/*", "module": "api/admin/posts/[id].js" },
+      { "pattern": "/api/admin/categories", "module": "api/admin/categories.js" },
+      { "pattern": "/api/admin/categories/*", "module": "api/admin/categories/[name].js" },
+      { "pattern": "/api/admin/comments", "module": "api/admin/comments.js" },
+      { "pattern": "/api/admin/images", "module": "api/admin/images.js" },
+      { "pattern": "/api/admin/upload", "module": "api/admin/upload.js" },
+      { "pattern": "/api/admin/stats", "module": "api/admin/stats.js" },
+      { "pattern": "/api/admin/backup", "module": "api/admin/backup.js" },
+      { "pattern": "/api/admin/navlinks", "module": "api/admin/navlinks.js" },
+      { "pattern": "/uploads/*", "module": "uploads/[filename].js" }
+    ]
+  }
 }
