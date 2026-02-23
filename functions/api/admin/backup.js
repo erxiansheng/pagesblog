@@ -81,7 +81,7 @@ export async function onRequestGet({ request }) {
   }
 }
 
-// POST: 恢复备份数据（分批写入，每次最多 5 个 key）
+// POST: 恢复备份数据（分批写入，客户端应控制每批不超过 3 个 key）
 export async function onRequestPost({ request }) {
   try {
     await requireAuth(request)
@@ -92,11 +92,20 @@ export async function onRequestPost({ request }) {
       return error('无效的备份数据', 400)
     }
 
-    const keys = Object.keys(body.data)
+    const keys = Object.keys(body.data).slice(0, 3) // 限制每批最多 3 个
+    const errors = []
     for (const key of keys) {
-      await kv.put(key, body.data[key])
+      try {
+        const value = body.data[key]
+        await kv.put(key, typeof value === 'string' ? value : JSON.stringify(value))
+      } catch (e) {
+        errors.push({ key, error: e.message || String(e) })
+      }
     }
 
+    if (errors.length) {
+      return json({ success: false, restoredKeys: keys.length - errors.length, errors }, 207)
+    }
     return json({ success: true, restoredKeys: keys.length })
   } catch (e) {
     if (e.message === 'Unauthorized') return error('未授权', 401)

@@ -18,7 +18,9 @@ function createAliyunKVWrapper(ns) {
       }
     },
     async put(key, value) {
-      return kv.put(key, value)
+      // 阿里云 EdgeKV 要求 value 为 string 类型
+      const strVal = typeof value === 'string' ? value : JSON.stringify(value)
+      return kv.put(key, strVal)
     },
     async delete(key) {
       try {
