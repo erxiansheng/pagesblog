@@ -33,7 +33,7 @@
 
 | 类别 | 技术 |
 |------|------|
-| 前端框架 | Vue 3 + Vue Router |
+| 前端框架 | Vue 3 + Vue Router （可自行打包小程序、app） |
 | 构建工具 | Vite |
 | 3D 渲染 | Three.js + DRACO 压缩 |
 | 动画 | GSAP |
