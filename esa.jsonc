@@ -1,13 +1,10 @@
 {
-  // 阿里云 ESA Pages 部署配置
-  "build": {
-    "command": "npm run build",
-    "output": "dist"
-  },
+  "name": "edgeone-blog",
+  "entry": "./functions/index.js",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
   "assets": {
-    "directory": "dist"
-  },
-  "functions": {
-    "entry": "functions/index.js"
+    "directory": "./dist",
+    "notFoundStrategy": "singlePageApplication"
   }
 }
