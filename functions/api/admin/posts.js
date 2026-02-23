@@ -1,6 +1,13 @@
 import { json, error, handleCors, requireAuth, genId, getKV } from '../_helpers.js'
 import { createESAHandler } from '../_helpers.js'
 
+// 从文章内容中提取图片引用
+function extractImageRefs(content) {
+  if (!content) return []
+  const matches = content.match(/\/uploads\/[^\s)"']+/g)
+  return matches ? [...new Set(matches)] : []
+}
+
 // GET /api/admin/posts - 后台文章列表（包含草稿，支持分页和分类筛选）
 export async function onRequestGet({ request }) {
   try {
@@ -55,6 +62,7 @@ export async function onRequestPost({ request }) {
     const indexStr = await kv.get('posts:index')
     const index = indexStr ? JSON.parse(indexStr) : []
     const { content, ...meta } = post
+    meta.imageRefs = extractImageRefs(post.content)
     index.unshift(meta)
     await kv.put('posts:index', JSON.stringify(index))
 

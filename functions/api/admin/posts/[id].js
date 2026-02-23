@@ -1,6 +1,13 @@
 import { json, error, handleCors, requireAuth, getKV } from '../../_helpers.js'
 import { createESAHandler } from '../../_helpers.js'
 
+// 从文章内容中提取图片引用
+function extractImageRefs(content) {
+  if (!content) return []
+  const matches = content.match(/\/uploads\/[^\s)"']+/g)
+  return matches ? [...new Set(matches)] : []
+}
+
 export async function onRequestPut({ request, params }) {
   try {
     await requireAuth(request)
@@ -28,6 +35,7 @@ export async function onRequestPut({ request, params }) {
     const indexStr = await kv.get('posts:index')
     const index = indexStr ? JSON.parse(indexStr) : []
     const { content, ...meta } = updated
+    meta.imageRefs = extractImageRefs(updated.content)
     const idx = index.findIndex(p => p.id === id)
     if (idx >= 0) {
       // 保留原有的 sortOrder

@@ -20,22 +20,41 @@ export async function onRequestGet({ request }) {
     const url = new URL(request.url)
     const keysParam = url.searchParams.get('keys')
 
-    // 分批模式：只读取指定的 keys
+    // 分批模式：只读取指定的 keys（客户端应控制每批不超过 6 个）
     if (keysParam) {
-      const keys = keysParam.split(',').filter(Boolean)
+      const keys = keysParam.split(',').filter(Boolean).slice(0, 6)
       const data = {}
+      const extraKeys = [] // 发现的分块 keys
       for (const key of keys) {
         const val = await kv.get(key)
-        if (val) data[key] = val
+        if (val) {
+          data[key] = val
+          // 如果是 image_meta，检查是否有分块，返回额外的 chunk keys
+          if (key.startsWith('image_meta:') ) {
+            try {
+              const meta = JSON.parse(val)
+              if (meta.chunked && meta.totalChunks) {
+                const fn = key.replace('image_meta:', '')
+                for (let i = 0; i < meta.totalChunks; i++) {
+                  extraKeys.push(`image:${fn}:chunk:${i}`)
+                }
+              }
+            } catch (e) { /* ignore */ }
+          }
+        }
       }
-      return json({ data })
+      return json({ data, extraKeys })
     }
 
     // 默认模式：返回所有需要备份的 key 列表（不含数据）
     const allKeys = [...BACKUP_KEYS]
 
-    // 收集文章 keys
-    const indexStr = await kv.get('posts:index')
+    // 并行收集文章和图片 keys（2 次 KV 调用）
+    const [indexStr, imagesIndexStr] = await Promise.all([
+      kv.get('posts:index'),
+      kv.get('images:index')
+    ])
+
     if (indexStr) {
       const posts = JSON.parse(indexStr)
       for (const p of posts) {
@@ -43,30 +62,19 @@ export async function onRequestGet({ request }) {
       }
     }
 
-    // 收集图片 keys
-    const imagesIndexStr = await kv.get('images:index')
+    // 图片 keys：将 image 和 image_meta 都加入列表
+    // 分块信息通过分批读取 meta 获取，但为避免超限，
+    // 将 meta 读取放到分批 GET 请求中由客户端处理
     if (imagesIndexStr) {
       const images = JSON.parse(imagesIndexStr)
       for (const img of images) {
         const fn = img.filename
         allKeys.push(`image:${fn}`)
         allKeys.push(`image_meta:${fn}`)
-        // 检查是否分块
-        const metaStr = await kv.get(`image_meta:${fn}`)
-        if (metaStr) {
-          try {
-            const meta = JSON.parse(metaStr)
-            if (meta.chunked && meta.totalChunks) {
-              for (let i = 0; i < meta.totalChunks; i++) {
-                allKeys.push(`image:${fn}:chunk:${i}`)
-              }
-            }
-          } catch (e) { /* ignore */ }
-        }
       }
     }
 
-    return json({ keys: allKeys })
+    return json({ keys: allKeys, needsChunkScan: true })
   } catch (e) {
     if (e.message === 'Unauthorized') return error('未授权', 401)
     return error(e.message, 500)

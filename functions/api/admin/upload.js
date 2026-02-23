@@ -34,22 +34,26 @@ export async function onRequestPost({ request }) {
     const CHUNK_SIZE = 512 * 1024 // 512KB per chunk (safer for KV limits)
     if (base64.length > CHUNK_SIZE) {
       const totalChunks = Math.ceil(base64.length / CHUNK_SIZE)
+      // 并行写入所有 chunks（减少串行 KV 调用次数）
+      const chunkOps = []
       for (let i = 0; i < totalChunks; i++) {
         const chunk = base64.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE)
-        await kv.put(`image:${filename}:chunk:${i}`, chunk)
+        chunkOps.push(kv.put(`image:${filename}:chunk:${i}`, chunk))
       }
-      // 存 metadata 标记为分块
-      await kv.put(`image_meta:${filename}`, JSON.stringify({
+      // 同时写入 meta 和主 key
+      chunkOps.push(kv.put(`image_meta:${filename}`, JSON.stringify({
         contentType: file.type, size: file.size, originalName: file.name,
         chunked: true, totalChunks
-      }))
-      // 主 key 存标记
-      await kv.put(`image:${filename}`, JSON.stringify({ chunked: true, totalChunks }))
+      })))
+      chunkOps.push(kv.put(`image:${filename}`, JSON.stringify({ chunked: true, totalChunks })))
+      await Promise.all(chunkOps)
     } else {
-      await kv.put(`image:${filename}`, base64)
-      await kv.put(`image_meta:${filename}`, JSON.stringify({
-        contentType: file.type, size: file.size, originalName: file.name
-      }))
+      await Promise.all([
+        kv.put(`image:${filename}`, base64),
+        kv.put(`image_meta:${filename}`, JSON.stringify({
+          contentType: file.type, size: file.size, originalName: file.name
+        }))
+      ])
     }
 
     // 更新图片索引
