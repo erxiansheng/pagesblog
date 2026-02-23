@@ -50,7 +50,7 @@
           </div>
           <div class="hero-bottom">
             <p class="hero-desc">{{ settings.description || '构建有意义的数字体验' }}</p>
-            <button v-if="posts.length" class="more-btn" @click="showAllArticles = true">
+            <button v-if="homePosts.length" class="more-btn" @click="showAllArticles = true">
               <span>查看全部文章</span>
               <span class="more-icon">↓</span>
             </button>
@@ -95,10 +95,13 @@
               </div>
             </div>
           </div>
-          <div class="sheet-body">
-            <div v-if="filteredPosts.length" class="posts-grid">
-              <PostCard v-for="post in filteredPosts" :key="post.id" :post="post" />
+          <div class="sheet-body" ref="sheetBodyRef" @wheel="onSheetWheel" @scroll="onSheetScroll" @mousedown="onSheetDragStart" @mousemove="onSheetDragMove" @mouseup="onSheetDragEnd" @mouseleave="onSheetDragEnd">
+            <div v-if="sheetPosts.length" class="posts-grid">
+              <PostCard v-for="post in sheetPosts" :key="post.id" :post="post" />
+              <div v-if="sheetLoading" class="sheet-loading">加载中...</div>
+              <div v-else-if="!sheetHasMore && sheetPosts.length" class="sheet-end">没有更多了</div>
             </div>
+            <div v-else-if="sheetLoading" class="sheet-empty">加载中...</div>
             <div v-else class="sheet-empty">没有找到匹配的文章</div>
           </div>
           <div class="sheet-footer">
@@ -115,7 +118,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import gsap from 'gsap'
 import ThreeScene from '../components/ThreeScene.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
@@ -125,7 +128,7 @@ import { getPosts, getCategories, getSiteSettings, getNavLinks } from '../api'
 const settings = ref({})
 const navLinks = ref([])
 const socialLinks = ref([])
-const posts = ref([])
+const homePosts = ref([])
 const categories = ref([])
 const currentCategory = ref('')
 const searchQuery = ref('')
@@ -134,6 +137,16 @@ const loaded = ref(false)
 const showAllArticles = ref(false)
 const settingsLoaded = ref(false)
 const year = new Date().getFullYear()
+
+// 弹窗分页状态
+const sheetPosts = ref([])
+const sheetPage = ref(1)
+const sheetTotal = ref(0)
+const sheetLoading = ref(false)
+const sheetHasMore = computed(() => sheetPosts.value.length < sheetTotal.value)
+const SHEET_LIMIT = 10
+
+let searchTimer = null
 
 const heroWords = computed(() => {
   const name = settings.value.siteName || 'My Blog'
@@ -149,28 +162,79 @@ const sceneModels = computed(() => {
   if (settings.value.models && settings.value.models.length) return settings.value.models
   return []
 })
-const homePosts = computed(() => {
-  const m = posts.value.filter(p => p.showOnHome)
-  return m.length ? m : posts.value.slice(0, 6)
-})
-const filteredPosts = computed(() => {
-  let result = posts.value
-  if (currentCategory.value) {
-    result = result.filter(p => p.category === currentCategory.value)
-  }
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.trim().toLowerCase()
-    result = result.filter(p =>
-      (p.title && p.title.toLowerCase().includes(q)) ||
-      (p.summary && p.summary.toLowerCase().includes(q)) ||
-      (p.category && p.category.toLowerCase().includes(q))
-    )
-  }
-  return result
-})
+
+async function loadSheetPosts(reset = false) {
+  if (sheetLoading.value) return
+  if (!reset && !sheetHasMore.value) return
+  sheetLoading.value = true
+  try {
+    if (reset) { sheetPage.value = 1; sheetPosts.value = [] }
+    const data = await getPosts(sheetPage.value, SHEET_LIMIT, {
+      category: currentCategory.value || undefined,
+      search: searchQuery.value.trim() || undefined
+    })
+    if (reset) {
+      sheetPosts.value = data.posts || []
+    } else {
+      sheetPosts.value = [...sheetPosts.value, ...(data.posts || [])]
+    }
+    sheetTotal.value = data.total || 0
+    sheetPage.value++
+  } catch (e) { console.error(e) }
+  finally { sheetLoading.value = false }
+}
 
 function onSearchInput() {
-  // 搜索时自动清除分类筛选，方便全局搜索
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => loadSheetPosts(true), 300)
+}
+
+watch(currentCategory, () => loadSheetPosts(true))
+watch(showAllArticles, (val) => {
+  if (val) loadSheetPosts(true)
+})
+
+// Sheet body horizontal scroll, drag & infinite scroll
+const sheetBodyRef = ref(null)
+let isDragging = false, dragStartX = 0, dragScrollLeft = 0
+
+function onSheetWheel(e) {
+  const el = sheetBodyRef.value
+  if (!el) return
+  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    e.preventDefault()
+    el.scrollLeft += e.deltaY
+  }
+}
+function onSheetScroll() {
+  const el = sheetBodyRef.value
+  if (!el) return
+  // 当滚动到距离右边 200px 以内时加载下一页
+  if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 200) {
+    loadSheetPosts()
+  }
+}
+function onSheetDragStart(e) {
+  const el = sheetBodyRef.value
+  if (!el) return
+  isDragging = true
+  dragStartX = e.pageX - el.offsetLeft
+  dragScrollLeft = el.scrollLeft
+  el.style.cursor = 'grabbing'
+  el.style.userSelect = 'none'
+}
+function onSheetDragMove(e) {
+  if (!isDragging) return
+  const el = sheetBodyRef.value
+  if (!el) return
+  e.preventDefault()
+  const x = e.pageX - el.offsetLeft
+  el.scrollLeft = dragScrollLeft - (x - dragStartX)
+}
+function onSheetDragEnd() {
+  isDragging = false
+  const el = sheetBodyRef.value
+  if (el) { el.style.cursor = ''; el.style.userSelect = '' }
 }
 
 function onProgress(pct) { progress.value = pct }
@@ -260,9 +324,10 @@ function resetCards() {
 onMounted(async () => {
   try {
     const [postsData, catsData, settingsData, linksData] = await Promise.all([
-      getPosts(1, 50), getCategories(), getSiteSettings(), getNavLinks()
+      getPosts(1, 6), getCategories(), getSiteSettings(), getNavLinks()
     ])
-    posts.value = postsData.posts || []
+    // 首页卡片：只显示设置了 showOnHome 的文章
+    homePosts.value = (postsData.posts || []).filter(p => p.showOnHome)
     categories.value = catsData.categories || []
     settings.value = settingsData || {}
     socialLinks.value = (settingsData.socialLinks || []).filter(l => l.label && l.url)
@@ -429,6 +494,11 @@ onMounted(async () => {
 }
 .search-clear:hover { color: var(--text); }
 .sheet-empty { text-align: center; padding: 3rem 0; color: var(--text-muted); font-size: 0.85rem; }
+.sheet-loading, .sheet-end {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 120px; flex-shrink: 0; color: var(--text-muted); font-size: 0.75rem;
+  padding: 0 1rem;
+}
 .category-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .category-tabs button {
   background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
@@ -438,8 +508,10 @@ onMounted(async () => {
 .category-tabs button:hover, .category-tabs button.active { background: rgba(201,169,110,0.2); border-color: var(--accent); color: #8b6c35; font-weight: 600; }
 :global(html.light) .category-tabs button.active,
 :global(html.light) .category-tabs button:hover { color: #7a5e2a; background: rgba(160,125,63,0.18); }
-.sheet-body { flex: 1; overflow-y: auto; padding: 0 2rem 1rem; background: transparent; }
-.posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.2rem; }
+.sheet-body { flex: 1; overflow-x: auto; overflow-y: hidden; padding: 0 2rem 1rem; background: transparent; cursor: grab; scrollbar-width: none; }
+.sheet-body::-webkit-scrollbar { display: none; }
+.posts-grid { display: flex; gap: 1.2rem; flex-wrap: nowrap; padding-bottom: 0.5rem; }
+.posts-grid > * { width: 300px; min-width: 300px; flex-shrink: 0; }
 .sheet-footer { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-top: 1px solid var(--border); flex-shrink: 0; background: transparent; border-radius: 0 0 0 0; }
 .sheet-copy { font-size: 0.7rem; color: var(--text-muted); }
 .sheet-footer-left { display: flex; flex-direction: row; align-items: center; gap: 0.6rem; }
@@ -509,7 +581,7 @@ onMounted(async () => {
   .sheet-body { padding: 0 1rem 1rem; }
   .sheet-header { padding: 0 1rem 0.8rem; }
   .sheet-footer { padding: 0.6rem 1rem; }
-  .posts-grid { grid-template-columns: 1fr; }
+  .posts-grid > * { width: 240px; min-width: 240px; }
   .nav-dock { right: 0.2rem; padding: 0.3rem; border-radius: 8px; }
   .nav-dock-header { font-size: 0.4rem; padding: 0.15rem 0.2rem 0.3rem; margin-bottom: 0.3rem; }
   .nav-dock-list { gap: 0.25rem; }

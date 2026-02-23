@@ -33,7 +33,7 @@ const load = async () => {
   try {
     const [commentsData, postsData] = await Promise.all([
       getAdminComments(),
-      getAdminPosts()
+      getAdminPosts(1, 9999)
     ])
     comments.value = (commentsData.comments || []).map(c => ({ ...c, deleting: false }))
     // Build postId -> title map

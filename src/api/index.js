@@ -15,7 +15,12 @@ async function request(url, options = {}) {
 }
 
 // Public API
-export const getPosts = (page = 1, limit = 10) => request(`/posts?page=${page}&limit=${limit}`)
+export const getPosts = (page = 1, limit = 10, { category, search } = {}) => {
+  let url = `/posts?page=${page}&limit=${limit}`
+  if (category) url += `&category=${encodeURIComponent(category)}`
+  if (search) url += `&search=${encodeURIComponent(search)}`
+  return request(url)
+}
 export const getPost = (id) => request(`/posts/${id}`)
 export const getCategories = () => request(`/categories`)
 export const getPostsByCategory = (name, page = 1) => request(`/posts?category=${name}&page=${page}`)
@@ -26,7 +31,14 @@ export const getNavLinks = () => request(`/navlinks`)
 export const login = (password) => request('/admin/login', {
   method: 'POST', body: JSON.stringify({ password })
 })
-export const getAdminPosts = () => request('/admin/posts')
+export const getAdminPosts = (page = 1, limit = 10, category = '') => {
+  let url = `/admin/posts?page=${page}&limit=${limit}`
+  if (category) url += `&category=${encodeURIComponent(category)}`
+  return request(url)
+}
+export const reorderPosts = (orders) => request('/admin/posts', {
+  method: 'PUT', body: JSON.stringify({ orders })
+})
 export const createPost = (data) => request('/admin/posts', {
   method: 'POST', body: JSON.stringify(data)
 })

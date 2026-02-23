@@ -12,10 +12,10 @@
         <h1>{{ post.title }}</h1>
         <p v-if="post.summary" class="article-summary">{{ post.summary }}</p>
       </header>
-      <div v-if="post.cover" class="article-cover">
+      <div v-if="post.cover" class="article-cover" @click="lightboxSrc = post.cover">
         <img :src="post.cover" :alt="post.title">
       </div>
-      <div class="article-content markdown-body" v-html="renderedContent"></div>
+      <div class="article-content markdown-body" v-html="renderedContent" @click="onContentClick"></div>
 
       <!-- Comments Section -->
       <section class="comments-section" v-if="post.commentsEnabled !== false">
@@ -63,11 +63,18 @@
     </article>
     <div v-else class="container empty">文章不存在</div>
     <Footer :siteName="siteName" :icp="icp" :copyright="copyright" />
+    <!-- Image Lightbox -->
+    <Transition name="lightbox">
+      <div v-if="lightboxSrc" class="lightbox-overlay" @click="lightboxSrc = ''">
+        <img :src="lightboxSrc" class="lightbox-img" @click.stop>
+        <button class="lightbox-close" @click="lightboxSrc = ''">✕</button>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
@@ -85,6 +92,28 @@ marked.setOptions({
   }
 })
 
+// 视频链接解析
+function parseVideoUrl(url) {
+  if (!url || typeof url !== 'string') return null
+  let m = url.match(/bilibili\.com\/video\/(BV[a-zA-Z0-9]+)/)
+  if (m) return { type: 'bilibili', id: m[1] }
+  m = url.match(/b23\.tv\/([a-zA-Z0-9]+)/)
+  if (m) return { type: 'bilibili-short', id: m[1] }
+  m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+  if (m) return { type: 'youtube', id: m[1] }
+  return null
+}
+
+function renderVideoEmbed(video) {
+  if (video.type === 'bilibili' || video.type === 'bilibili-short') {
+    return `<div class="video-embed"><iframe src="https://player.bilibili.com/player.html?bvid=${video.id}&autoplay=0" allowfullscreen></iframe></div>`
+  }
+  if (video.type === 'youtube') {
+    return `<div class="video-embed"><iframe src="https://www.youtube.com/embed/${video.id}" allowfullscreen></iframe></div>`
+  }
+  return null
+}
+
 const route = useRoute()
 const post = ref(null)
 const loading = ref(true)
@@ -99,8 +128,47 @@ const commentForm = ref({ nickname: '', content: '', captchaAnswer: '' })
 const commentError = ref('')
 const submitting = ref(false)
 
-const renderedContent = computed(() => post.value ? marked(post.value.content || '') : '')
+const renderedContent = computed(() => {
+  if (!post.value) return ''
+  let html = marked(post.value.content || '')
+  // 后处理：将独立段落中的视频链接替换为嵌入播放器
+  html = html.replace(/<p>\s*(https?:\/\/[^\s<]+(?:bilibili\.com\/video\/BV[a-zA-Z0-9]+|b23\.tv\/[a-zA-Z0-9]+|youtube\.com\/watch\?v=[a-zA-Z0-9_-]{11}|youtu\.be\/[a-zA-Z0-9_-]{11})[^\s<]*)\s*<\/p>/gi, (match, url) => {
+    const video = parseVideoUrl(url)
+    if (video) {
+      const embed = renderVideoEmbed(video)
+      if (embed) return embed
+    }
+    return match
+  })
+  // 也处理 <a> 链接形式的视频
+  html = html.replace(/<a\s+href="(https?:\/\/[^"]*(?:bilibili\.com\/video\/BV[a-zA-Z0-9]+|b23\.tv\/[a-zA-Z0-9]+|youtube\.com\/watch\?v=[a-zA-Z0-9_-]{11}|youtu\.be\/[a-zA-Z0-9_-]{11})[^"]*)"[^>]*>[^<]*<\/a>/gi, (match, url) => {
+    const video = parseVideoUrl(url)
+    if (video) {
+      const embed = renderVideoEmbed(video)
+      if (embed) return embed
+    }
+    return match
+  })
+  return html
+})
 const formatDate = (ts) => ts ? new Date(ts).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) : ''
+
+// Image lightbox
+const lightboxSrc = ref('')
+function onContentClick(e) {
+  if (e.target.tagName === 'IMG' && e.target.closest('.markdown-body')) {
+    lightboxSrc.value = e.target.src
+  }
+}
+function onKeydown(e) {
+  if (e.key === 'Escape' && lightboxSrc.value) lightboxSrc.value = ''
+}
+onMounted(() => {
+  document.addEventListener('keydown', onKeydown)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onKeydown)
+})
 
 const loadCaptcha = async () => {
   try { captcha.value = await getCaptcha() } catch (e) { console.error(e) }
@@ -154,8 +222,9 @@ onMounted(async () => {
 .article-views { font-size: 0.75rem; color: var(--text-muted); }
 .article-header h1 { font-size: 2.2rem; font-weight: 600; line-height: 1.3; margin-bottom: 0.8rem; }
 .article-summary { font-size: 1rem; color: var(--text-dim); line-height: 1.6; }
-.article-cover { margin-bottom: 2rem; border-radius: var(--radius); overflow: hidden; }
-.article-cover img { width: 100%; }
+.article-cover { margin-bottom: 2rem; border-radius: var(--radius); overflow: hidden; cursor: zoom-in; }
+.article-cover img { width: 100%; transition: opacity 0.2s; }
+.article-cover:hover img { opacity: 0.9; }
 .article-nav { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
 .back-link { font-size: 0.85rem; color: var(--text-dim); transition: color 0.3s; }
 .back-link:hover { color: var(--accent); }
@@ -193,6 +262,14 @@ onMounted(async () => {
 .submit-btn:hover { opacity: 0.85; }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .comments-closed-hint { text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.85rem; }
+
+/* Lightbox */
+.lightbox-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
+.lightbox-img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; cursor: default; }
+.lightbox-close { position: fixed; top: 1.5rem; right: 1.5rem; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+.lightbox-close:hover { background: rgba(255,255,255,0.3); }
+.lightbox-enter-active, .lightbox-leave-active { transition: opacity 0.25s; }
+.lightbox-enter-from, .lightbox-leave-to { opacity: 0; }
 </style>
 
 <style>
@@ -203,7 +280,8 @@ onMounted(async () => {
 .markdown-body p { margin-bottom: 1.2rem; }
 .markdown-body a { color: var(--accent); border-bottom: 1px solid transparent; transition: border-color 0.3s; }
 .markdown-body a:hover { border-bottom-color: var(--accent); }
-.markdown-body img { border-radius: var(--radius-sm); margin: 1.5rem 0; }
+.markdown-body img { border-radius: var(--radius-sm); margin: 1.5rem 0; cursor: zoom-in; transition: opacity 0.2s; }
+.markdown-body img:hover { opacity: 0.9; }
 .markdown-body pre { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.2rem; overflow-x: auto; margin: 1.5rem 0; }
 .markdown-body code { font-size: 0.85em; font-family: 'Fira Code', monospace; }
 .markdown-body :not(pre) > code { background: var(--bg-input); padding: 0.15em 0.4em; border-radius: 4px; }
@@ -227,4 +305,7 @@ html.light .hljs-type { color: #953800; }
 .markdown-body table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
 .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 0.6rem 1rem; text-align: left; }
 .markdown-body th { background: var(--bg-surface); font-weight: 600; }
+/* Video embed */
+.markdown-body .video-embed { position: relative; width: 100%; padding-bottom: 56.25%; margin: 1.5rem 0; border-radius: var(--radius-sm); overflow: hidden; background: #000; }
+.markdown-body .video-embed iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
 </style>

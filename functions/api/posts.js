@@ -6,6 +6,7 @@ export async function onRequestGet({ request }) {
   const page = parseInt(url.searchParams.get('page') || '1')
   const limit = parseInt(url.searchParams.get('limit') || '10')
   const category = url.searchParams.get('category') || ''
+  const search = (url.searchParams.get('search') || '').trim().toLowerCase()
 
   try {
     const kv = getKV()
@@ -14,7 +15,20 @@ export async function onRequestGet({ request }) {
 
     posts = posts.filter(p => p.published)
     if (category) posts = posts.filter(p => p.category === category)
-    posts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    if (search) {
+      posts = posts.filter(p =>
+        (p.title && p.title.toLowerCase().includes(search)) ||
+        (p.summary && p.summary.toLowerCase().includes(search)) ||
+        (p.category && p.category.toLowerCase().includes(search))
+      )
+    }
+    // 按 sortOrder 排序（如果有），否则按创建时间倒序
+    posts.sort((a, b) => {
+      const sa = typeof a.sortOrder === 'number' ? a.sortOrder : Infinity
+      const sb = typeof b.sortOrder === 'number' ? b.sortOrder : Infinity
+      if (sa !== sb) return sa - sb
+      return (b.createdAt || 0) - (a.createdAt || 0)
+    })
 
     const total = posts.length
     const start = (page - 1) * limit
