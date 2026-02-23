@@ -8,28 +8,6 @@
     "directory": "dist"
   },
   "functions": {
-    "directory": "functions",
-    "routes": [
-      { "pattern": "/api/posts", "module": "api/posts.js" },
-      { "pattern": "/api/posts/*", "module": "api/posts/[id].js" },
-      { "pattern": "/api/categories", "module": "api/categories.js" },
-      { "pattern": "/api/settings", "module": "api/settings.js" },
-      { "pattern": "/api/navlinks", "module": "api/navlinks.js" },
-      { "pattern": "/api/comments", "module": "api/comments.js" },
-      { "pattern": "/api/captcha", "module": "api/captcha.js" },
-      { "pattern": "/api/admin/login", "module": "api/admin/login.js" },
-      { "pattern": "/api/admin/settings", "module": "api/admin/settings.js" },
-      { "pattern": "/api/admin/posts", "module": "api/admin/posts.js" },
-      { "pattern": "/api/admin/posts/*", "module": "api/admin/posts/[id].js" },
-      { "pattern": "/api/admin/categories", "module": "api/admin/categories.js" },
-      { "pattern": "/api/admin/categories/*", "module": "api/admin/categories/[name].js" },
-      { "pattern": "/api/admin/comments", "module": "api/admin/comments.js" },
-      { "pattern": "/api/admin/images", "module": "api/admin/images.js" },
-      { "pattern": "/api/admin/upload", "module": "api/admin/upload.js" },
-      { "pattern": "/api/admin/stats", "module": "api/admin/stats.js" },
-      { "pattern": "/api/admin/backup", "module": "api/admin/backup.js" },
-      { "pattern": "/api/admin/navlinks", "module": "api/admin/navlinks.js" },
-      { "pattern": "/uploads/*", "module": "uploads/[filename].js" }
-    ]
+    "entry": "functions/index.js"
   }
 }
