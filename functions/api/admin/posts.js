@@ -80,7 +80,11 @@ export async function onRequestPut({ request }) {
 
     for (const post of index) {
       if (orderMap[post.id] !== undefined) {
-        post.sortOrder = orderMap[post.id]
+        if (orderMap[post.id] === null) {
+          delete post.sortOrder
+        } else {
+          post.sortOrder = orderMap[post.id]
+        }
       }
     }
     await kv.put('posts:index', JSON.stringify(index))

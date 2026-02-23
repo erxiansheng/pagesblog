@@ -86,8 +86,9 @@
             <div class="sheet-toolbar">
               <div class="search-box">
                 <span class="search-icon">🔍</span>
-                <input v-model="searchQuery" class="search-input" placeholder="搜索文章..." @input="onSearchInput">
-                <button v-if="searchQuery" class="search-clear" @click="searchQuery = ''">✕</button>
+                <input v-model="searchQuery" class="search-input" placeholder="搜索文章..." @keydown.enter="doSearch">
+                <button v-if="searchQuery" class="search-clear" @click="clearSearch">✕</button>
+                <button class="search-btn" @click="doSearch">搜索</button>
               </div>
               <div class="category-tabs">
                 <button :class="{ active: !currentCategory }" @click="currentCategory = ''">全部</button>
@@ -96,17 +97,21 @@
             </div>
           </div>
           <div class="sheet-body" ref="sheetBodyRef" @wheel="onSheetWheel" @scroll="onSheetScroll" @mousedown="onSheetDragStart" @mousemove="onSheetDragMove" @mouseup="onSheetDragEnd" @mouseleave="onSheetDragEnd">
-            <div v-if="sheetPosts.length" class="posts-grid">
-              <PostCard v-for="post in sheetPosts" :key="post.id" :post="post" />
-              <div v-if="sheetLoading" class="sheet-loading">加载中...</div>
-              <div v-else-if="!sheetHasMore && sheetPosts.length" class="sheet-end">没有更多了</div>
-            </div>
-            <div v-else-if="sheetLoading" class="sheet-empty">加载中...</div>
-            <div v-else class="sheet-empty">没有找到匹配的文章</div>
+            <Transition name="fade" mode="out-in">
+              <div v-if="sheetPosts.length" class="posts-grid" key="posts">
+                <TransitionGroup name="card-fade" tag="div" class="posts-grid-inner">
+                  <PostCard v-for="post in sheetPosts" :key="post.id" :post="post" />
+                </TransitionGroup>
+                <div v-if="sheetLoading" class="sheet-loading">加载中...</div>
+                <div v-else-if="!sheetHasMore && sheetPosts.length" class="sheet-end">没有更多了</div>
+              </div>
+              <div v-else-if="sheetLoading" class="sheet-empty" key="loading">加载中...</div>
+              <div v-else class="sheet-empty" key="empty">没有找到匹配的文章</div>
+            </Transition>
           </div>
           <div class="sheet-footer">
             <div class="sheet-footer-left">
-              <span class="sheet-copy">{{ settings.copyright || `© ${year} ${settings.siteName || 'Blog'}. Powered by EdgeOne Pages` }}</span>
+              <span class="sheet-copy">{{ settings.copyright || `© ${year} ${settings.siteName || 'Blog'}. Powered by lfc` }}</span>
               <a v-if="settings.icp" class="sheet-icp" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">{{ settings.icp }}</a>
             </div>
             <router-link to="/admin/login" class="sheet-admin">管理</router-link>
@@ -146,8 +151,6 @@ const sheetLoading = ref(false)
 const sheetHasMore = computed(() => sheetPosts.value.length < sheetTotal.value)
 const SHEET_LIMIT = 10
 
-let searchTimer = null
-
 const heroWords = computed(() => {
   const name = settings.value.siteName || 'My Blog'
   return name.split(' ').length > 1 ? name.split(' ') : [name]
@@ -184,9 +187,13 @@ async function loadSheetPosts(reset = false) {
   finally { sheetLoading.value = false }
 }
 
-function onSearchInput() {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => loadSheetPosts(true), 300)
+function doSearch() {
+  loadSheetPosts(true)
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  loadSheetPosts(true)
 }
 
 watch(currentCategory, () => loadSheetPosts(true))
@@ -324,10 +331,10 @@ function resetCards() {
 onMounted(async () => {
   try {
     const [postsData, catsData, settingsData, linksData] = await Promise.all([
-      getPosts(1, 6), getCategories(), getSiteSettings(), getNavLinks()
+      getPosts(1, 50, { showOnHome: true }), getCategories(), getSiteSettings(), getNavLinks()
     ])
-    // 首页卡片：只显示设置了 showOnHome 的文章
-    homePosts.value = (postsData.posts || []).filter(p => p.showOnHome)
+    // 首页卡片：后端已过滤只返回 showOnHome 的文章
+    homePosts.value = postsData.posts || []
     categories.value = catsData.categories || []
     settings.value = settingsData || {}
     socialLinks.value = (settingsData.socialLinks || []).filter(l => l.label && l.url)
@@ -493,12 +500,25 @@ onMounted(async () => {
   font-size: 0.6rem; padding: 0; line-height: 1; transition: color 0.2s;
 }
 .search-clear:hover { color: var(--text); }
+.search-btn {
+  background: var(--accent); color: var(--bg); border: none; border-radius: 14px;
+  padding: 0.2rem 0.6rem; font-size: 0.65rem; cursor: pointer; font-family: var(--font);
+  font-weight: 500; transition: opacity 0.2s; white-space: nowrap;
+}
+.search-btn:hover { opacity: 0.8; }
 .sheet-empty { text-align: center; padding: 3rem 0; color: var(--text-muted); font-size: 0.85rem; }
 .sheet-loading, .sheet-end {
   display: flex; align-items: center; justify-content: center;
   min-width: 120px; flex-shrink: 0; color: var(--text-muted); font-size: 0.75rem;
   padding: 0 1rem;
 }
+/* 内容切换过渡 */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.25s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+/* 卡片逐个出现 */
+.card-fade-enter-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+.card-fade-enter-from { opacity: 0; transform: translateY(12px); }
+.posts-grid-inner { display: flex; gap: 1.2rem; flex-wrap: nowrap; }
 .category-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .category-tabs button {
   background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
@@ -510,8 +530,9 @@ onMounted(async () => {
 :global(html.light) .category-tabs button:hover { color: #7a5e2a; background: rgba(160,125,63,0.18); }
 .sheet-body { flex: 1; overflow-x: auto; overflow-y: hidden; padding: 0 2rem 1rem; background: transparent; cursor: grab; scrollbar-width: none; }
 .sheet-body::-webkit-scrollbar { display: none; }
-.posts-grid { display: flex; gap: 1.2rem; flex-wrap: nowrap; padding-bottom: 0.5rem; }
-.posts-grid > * { width: 300px; min-width: 300px; flex-shrink: 0; }
+.posts-grid { display: flex; gap: 1.2rem; flex-wrap: nowrap; padding-bottom: 0.5rem; align-items: stretch; }
+.posts-grid > * { flex-shrink: 0; }
+.posts-grid-inner > * { width: 300px; min-width: 300px; flex-shrink: 0; }
 .sheet-footer { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-top: 1px solid var(--border); flex-shrink: 0; background: transparent; border-radius: 0 0 0 0; }
 .sheet-copy { font-size: 0.7rem; color: var(--text-muted); }
 .sheet-footer-left { display: flex; flex-direction: row; align-items: center; gap: 0.6rem; }
@@ -581,7 +602,7 @@ onMounted(async () => {
   .sheet-body { padding: 0 1rem 1rem; }
   .sheet-header { padding: 0 1rem 0.8rem; }
   .sheet-footer { padding: 0.6rem 1rem; }
-  .posts-grid > * { width: 240px; min-width: 240px; }
+  .posts-grid-inner > * { width: 240px; min-width: 240px; }
   .nav-dock { right: 0.2rem; padding: 0.3rem; border-radius: 8px; }
   .nav-dock-header { font-size: 0.4rem; padding: 0.15rem 0.2rem 0.3rem; margin-bottom: 0.3rem; }
   .nav-dock-list { gap: 0.25rem; }

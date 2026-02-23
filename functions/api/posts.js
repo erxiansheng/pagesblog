@@ -7,6 +7,7 @@ export async function onRequestGet({ request }) {
   const limit = parseInt(url.searchParams.get('limit') || '10')
   const category = url.searchParams.get('category') || ''
   const search = (url.searchParams.get('search') || '').trim().toLowerCase()
+  const showOnHome = url.searchParams.get('showOnHome') === 'true'
 
   try {
     const kv = getKV()
@@ -14,6 +15,7 @@ export async function onRequestGet({ request }) {
     let posts = indexStr ? JSON.parse(indexStr) : []
 
     posts = posts.filter(p => p.published)
+    if (showOnHome) posts = posts.filter(p => p.showOnHome)
     if (category) posts = posts.filter(p => p.category === category)
     if (search) {
       posts = posts.filter(p =>

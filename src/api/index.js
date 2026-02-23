@@ -15,10 +15,11 @@ async function request(url, options = {}) {
 }
 
 // Public API
-export const getPosts = (page = 1, limit = 10, { category, search } = {}) => {
+export const getPosts = (page = 1, limit = 10, { category, search, showOnHome } = {}) => {
   let url = `/posts?page=${page}&limit=${limit}`
   if (category) url += `&category=${encodeURIComponent(category)}`
   if (search) url += `&search=${encodeURIComponent(search)}`
+  if (showOnHome) url += `&showOnHome=true`
   return request(url)
 }
 export const getPost = (id) => request(`/posts/${id}`)

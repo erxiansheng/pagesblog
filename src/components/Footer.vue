@@ -2,7 +2,7 @@
   <footer class="footer">
     <div class="container footer-inner">
       <div class="footer-left">
-        <span class="footer-copy">{{ copyright || `© ${year} ${siteName}. Powered by EdgeOne Pages` }}</span>
+        <span class="footer-copy">{{ copyright || `© ${year} ${siteName}. Powered by lfc` }}</span>
         <a v-if="icp" class="footer-icp" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">{{ icp }}</a>
       </div>
       <router-link to="/admin/login" class="footer-admin">管理</router-link>

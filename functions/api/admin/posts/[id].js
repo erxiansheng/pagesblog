@@ -29,7 +29,13 @@ export async function onRequestPut({ request, params }) {
     const index = indexStr ? JSON.parse(indexStr) : []
     const { content, ...meta } = updated
     const idx = index.findIndex(p => p.id === id)
-    if (idx >= 0) index[idx] = meta; else index.unshift(meta)
+    if (idx >= 0) {
+      // 保留原有的 sortOrder
+      const oldSortOrder = index[idx].sortOrder
+      index[idx] = { ...meta, sortOrder: oldSortOrder }
+    } else {
+      index.unshift(meta)
+    }
     await kv.put('posts:index', JSON.stringify(index))
 
     return json({ post: meta })

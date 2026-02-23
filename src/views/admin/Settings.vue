@@ -51,7 +51,7 @@
 
       <div class="form-group">
         <label>版权信息</label>
-        <p class="form-hint">页脚显示的版权文字，留空则默认显示「© 年份 站点名称. Powered by EdgeOne Pages」</p>
+        <p class="form-hint">页脚显示的版权文字，留空则默认显示「© 年份 站点名称. Powered by lfc」</p>
         <input v-model="form.copyright" class="input-field" placeholder="© 2026 Big Smart. Powered by Big Smart">
       </div>
       <div class="form-group">
