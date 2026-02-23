@@ -1,0 +1,35 @@
+{
+  // 阿里云 ESA Pages 部署配置
+  // 文档: https://help.aliyun.com/zh/edge-security-acceleration/esa/user-guide/pages
+  "build": {
+    "command": "npm run build",
+    "output": "dist"
+  },
+  "routes": [
+    // 公开 API
+    { "src": "/api/posts", "dest": "functions/api/posts.js" },
+    { "src": "/api/posts/:id", "dest": "functions/api/posts/[id].js" },
+    { "src": "/api/categories", "dest": "functions/api/categories.js" },
+    { "src": "/api/settings", "dest": "functions/api/settings.js" },
+    { "src": "/api/navlinks", "dest": "functions/api/navlinks.js" },
+    { "src": "/api/comments", "dest": "functions/api/comments.js" },
+    { "src": "/api/captcha", "dest": "functions/api/captcha.js" },
+
+    // 管理 API
+    { "src": "/api/admin/login", "dest": "functions/api/admin/login.js" },
+    { "src": "/api/admin/settings", "dest": "functions/api/admin/settings.js" },
+    { "src": "/api/admin/posts", "dest": "functions/api/admin/posts.js" },
+    { "src": "/api/admin/posts/:id", "dest": "functions/api/admin/posts/[id].js" },
+    { "src": "/api/admin/categories", "dest": "functions/api/admin/categories.js" },
+    { "src": "/api/admin/categories/:name", "dest": "functions/api/admin/categories/[name].js" },
+    { "src": "/api/admin/comments", "dest": "functions/api/admin/comments.js" },
+    { "src": "/api/admin/images", "dest": "functions/api/admin/images.js" },
+    { "src": "/api/admin/upload", "dest": "functions/api/admin/upload.js" },
+    { "src": "/api/admin/stats", "dest": "functions/api/admin/stats.js" },
+    { "src": "/api/admin/backup", "dest": "functions/api/admin/backup.js" },
+    { "src": "/api/admin/navlinks", "dest": "functions/api/admin/navlinks.js" },
+
+    // 文件服务（图片/模型）
+    { "src": "/uploads/:filename", "dest": "functions/uploads/[filename].js" }
+  ]
+}
