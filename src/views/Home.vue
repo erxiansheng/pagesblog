@@ -574,7 +574,7 @@ onUnmounted(() => {
 .card-fade-enter-active { transition: opacity 0.3s ease, transform 0.3s ease; }
 .card-fade-enter-from { opacity: 0; transform: translateY(12px); }
 .posts-grid-inner { display: flex; gap: 1rem; flex-wrap: nowrap; height: 100%; align-items: stretch; }
-.posts-grid-inner > :deep(.post-card) { width: auto; height: 100%; 4/4; flex-shrink: 0; }
+.posts-grid-inner > :deep(.post-card) { width: calc((36vh - 8rem) * 0.75); height: 100%; flex-shrink: 0; }
 .category-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .category-tabs button {
   background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
@@ -640,7 +640,7 @@ onUnmounted(() => {
   .sheet-header h2 { font-size: 1rem; }
   .search-box { flex: -1; min-width: 0; }
   .search-input { width: 60px; flex: 1; min-width: 0; }
-  .posts-grid-inner > :deep(.post-card) { aspect-ratio: 3/4; }
+  .posts-grid-inner > :deep(.post-card) { width: calc((75vh - 8rem) * 0.75); }
   .nav-dock { right: 0.3rem; padding: 0.4rem; border-radius: 10px; }
   .nav-dock-header { font-size: 0.5rem; padding: 0.2rem 0.3rem 0.4rem; }
   .nav-dock-list { gap: 0.3rem; }
@@ -669,7 +669,7 @@ onUnmounted(() => {
   .sheet-header { padding: 0 0.8rem 0.5rem; gap: 0.4rem; }
   .sheet-header h2 { font-size: 0.95rem; }
   .sheet-footer { padding: 0.6rem 1rem; }
-  .posts-grid-inner > :deep(.post-card) { aspect-ratio: 3/4; }
+  .posts-grid-inner > :deep(.post-card) { width: calc((35vh - 6rem) * 0.75); }
   .nav-dock { right: 0.2rem; padding: 0.3rem; border-radius: 8px; }
   .nav-dock-header { font-size: 0.4rem; padding: 0.15rem 0.2rem 0.3rem; margin-bottom: 0.3rem; }
   .nav-dock-list { gap: 0.25rem; }
