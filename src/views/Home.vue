@@ -574,7 +574,7 @@ onUnmounted(() => {
 .card-fade-enter-active { transition: opacity 0.3s ease, transform 0.3s ease; }
 .card-fade-enter-from { opacity: 0; transform: translateY(12px); }
 .posts-grid-inner { display: flex; gap: 1rem; flex-wrap: nowrap; height: 100%; align-items: stretch; }
-.posts-grid-inner > :deep(.post-card) { width: auto; height: 100%; 3.7/4; flex-shrink: 0; }
+.posts-grid-inner > :deep(.post-card) { width: auto; height: 100%; 4/4; flex-shrink: 0; }
 .category-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .category-tabs button {
   background: var(--bg-input); border: 1px solid var(--border); color: var(--text);

@@ -46,7 +46,7 @@ const formatDate = (ts) => {
   padding: 0.15em 0.55em; border-radius: 20px; font-weight: 500; white-space: nowrap;
 }
 .card-date { color: var(--text-muted); white-space: nowrap; }
-.card-title { font-size: 0.8rem; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex-shrink: 0; }
+.card-title { font-size: 1rem; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex-shrink: 0; }
 .card-summary { font-size: 0.7rem; color: var(--text-dim); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 0; }
 .card-arrow {
   position: absolute; top: 0.6rem; right: 0.6rem; font-size: 0.8rem;
