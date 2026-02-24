@@ -82,18 +82,18 @@
         <div class="sheet-panel">
           <div class="sheet-handle" @click="showAllArticles = false"><span></span></div>
           <div class="sheet-header">
-            <h2>全部文章</h2>
-            <div class="sheet-toolbar">
+            <div class="sheet-header-top">
+              <h2>全部文章</h2>
               <div class="search-box">
                 <span class="search-icon">🔍</span>
                 <input v-model="searchQuery" class="search-input" placeholder="搜索文章..." @keydown.enter="doSearch">
                 <button v-if="searchQuery" class="search-clear" @click="clearSearch">✕</button>
                 <button class="search-btn" @click="doSearch">搜索</button>
               </div>
-              <div class="category-tabs">
-                <button :class="{ active: !currentCategory }" @click="currentCategory = ''">全部</button>
-                <button v-for="cat in categories" :key="cat" :class="{ active: currentCategory === cat }" @click="currentCategory = cat">{{ cat }}</button>
-              </div>
+            </div>
+            <div class="category-tabs">
+              <button :class="{ active: !currentCategory }" @click="currentCategory = ''">全部</button>
+              <button v-for="cat in categories" :key="cat" :class="{ active: currentCategory === cat }" @click="currentCategory = cat">{{ cat }}</button>
             </div>
           </div>
           <div class="sheet-body" ref="sheetBodyRef" @scroll="onSheetScroll" @mousedown="onSheetDragStart" @mousemove="onSheetDragMove" @mouseup="onSheetDragEnd" @mouseleave="onSheetDragEnd">
@@ -424,14 +424,14 @@ onMounted(async () => {
 }
 .cards-layer::-webkit-scrollbar { display: none; }
 .card {
-  pointer-events: auto; position: relative; width: 200px; flex-shrink: 0;
+  pointer-events: auto; position: relative; width: 11.2vw; min-width: 100px; flex-shrink: 0;
   background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px;
   display: flex; flex-direction: column; overflow: hidden;
   transform-origin: bottom center; transition: background 0.3s, border-color 0.3s;
   will-change: transform;
 }
 .card:hover { background: var(--bg-surface); border-color: var(--border-hover); }
-.card-thumb { width: 100%; height: 120px; overflow: hidden; }
+.card-thumb { width: 100%; aspect-ratio: 5/3; overflow: hidden; }
 .card-thumb img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
 .card:hover .card-thumb img { opacity: 1; }
 .card-content { padding: 0.6rem 0.8rem 0.8rem; display: flex; flex-direction: column; gap: 0.2rem; }
@@ -474,7 +474,7 @@ onMounted(async () => {
 }
 .nav-dock-list::-webkit-scrollbar { display: none; }
 .nav-card {
-  position: relative; width: 133px; flex-shrink: 0;
+  position: relative; width: 7.2vw; min-width: 65px; flex-shrink: 0;
   background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px;
   display: flex; flex-direction: column; overflow: hidden;
   transition: background 0.3s, border-color 0.3s;
@@ -482,7 +482,7 @@ onMounted(async () => {
   cursor: pointer;
 }
 .nav-card:hover { background: var(--bg-surface); border-color: var(--border-hover); }
-.nav-card-thumb { width: 100%; height: 80px; overflow: hidden; }
+.nav-card-thumb { width: 100%; aspect-ratio: 5/3; overflow: hidden; }
 .nav-card-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; transition: opacity 0.3s; }
 .nav-card:hover .nav-card-thumb img { opacity: 1; }
 .nav-card-content { padding: 0.4rem 0.55rem 0.55rem; display: flex; flex-direction: column; gap: 0.15rem; }
@@ -511,7 +511,7 @@ onMounted(async () => {
 .sheet-panel {
   position: relative;
   border-top: 1px solid rgba(255,255,255,0.1);
-  border-radius: 20px 20px 0 0; max-height: 80vh; display: flex; flex-direction: column;
+  border-radius: 20px 20px 0 0; height: 43vh; max-height:43vh; display: flex; flex-direction: column;
   animation: sheetUp 0.4s var(--ease); isolation: isolate;
 }
 .sheet-panel::before {
@@ -529,9 +529,9 @@ onMounted(async () => {
 @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .sheet-handle { display: flex; justify-content: center; padding: 0.8rem 0 0.4rem; cursor: pointer; }
 .sheet-handle span { width: 36px; height: 4px; border-radius: 2px; background: var(--text-muted); }
-.sheet-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 0 2rem 1rem; flex-wrap: wrap; gap: 0.8rem; }
-.sheet-header h2 { font-size: 1.2rem; font-weight: 500; }
-.sheet-toolbar { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+.sheet-header { display: flex; flex-direction: column; padding: 0 2rem 1rem; gap: 0.8rem; }
+.sheet-header-top { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
+.sheet-header h2 { font-size: 1.2rem; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
 .search-box {
   display: flex; align-items: center; gap: 0.4rem;
   background: var(--bg-input); border: 1px solid var(--border); border-radius: 20px;
@@ -555,7 +555,7 @@ onMounted(async () => {
   font-weight: 500; transition: opacity 0.2s; white-space: nowrap;
 }
 .search-btn:hover { opacity: 0.8; }
-.sheet-empty { text-align: center; padding: 3rem 0; color: var(--text-muted); font-size: 0.85rem; }
+.sheet-empty { text-align: center; color: var(--text-muted); font-size: 0.85rem; height: 100%; display: flex; align-items: center; justify-content: center; }
 .sheet-loading, .sheet-end {
   display: flex; align-items: center; justify-content: center;
   min-width: 120px; flex-shrink: 0; color: var(--text-muted); font-size: 0.75rem;
@@ -567,7 +567,7 @@ onMounted(async () => {
 /* 卡片逐个出现 */
 .card-fade-enter-active { transition: opacity 0.3s ease, transform 0.3s ease; }
 .card-fade-enter-from { opacity: 0; transform: translateY(12px); }
-.posts-grid-inner { display: flex; gap: 1.2rem; flex-wrap: nowrap; }
+.posts-grid-inner { display: flex; gap: 0.8rem; flex-wrap: nowrap; height: 100%; align-items: stretch; }
 .category-tabs { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .category-tabs button {
   background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
@@ -578,15 +578,16 @@ onMounted(async () => {
 :global(html.light) .category-tabs button.active,
 :global(html.light) .category-tabs button:hover { color: #7a5e2a; background: rgba(160,125,63,0.18); }
 .sheet-body {
-  flex: 1; overflow-x: auto; overflow-y: hidden; padding: 0 2rem 1rem;
+  flex: 1; overflow-x: auto; overflow-y: hidden; padding: 0 2rem 0.5rem;
   background: transparent; cursor: grab; scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   contain: layout style paint;
+  min-height: 0;
 }
 .sheet-body::-webkit-scrollbar { display: none; }
-.posts-grid { display: flex; gap: 1.2rem; flex-wrap: nowrap; padding-bottom: 0.5rem; align-items: stretch; will-change: transform; }
+.posts-grid { display: flex; gap: 0.8rem; flex-wrap: nowrap; padding-bottom: 0.5rem; align-items: stretch; will-change: transform; height: 100%; }
 .posts-grid > * { flex-shrink: 0; }
-.posts-grid-inner > * { width: 300px; min-width: 300px; flex-shrink: 0; }
+.posts-grid-inner > * { height: 100%; flex-shrink: 0; }
 .sheet-footer { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-top: 1px solid var(--border); flex-shrink: 0; background: transparent; border-radius: 0 0 0 0; }
 .sheet-copy { font-size: 0.7rem; color: var(--text-muted); }
 .sheet-footer-left { display: flex; flex-direction: row; align-items: center; gap: 0.6rem; }
@@ -606,11 +607,9 @@ onMounted(async () => {
 
 @media (max-width: 1024px) {
   .cards-layer { padding: 0.5rem 1.5rem; gap: 1rem; }
-  .card { width: 170px; }
-  .card-thumb { height: 95px; }
+  .card { width: 14.4vw; }
   .nav-dock { right: 0.5rem; padding: 0.5rem; }
-  .nav-card { width: 113px; }
-  .nav-card-thumb { height: 65px; }
+  .nav-card { width: 6.4vw; }
 }
 @media (max-width: 768px) {
   .nav { padding: 0.8rem 1.2rem; }
@@ -619,8 +618,7 @@ onMounted(async () => {
   .hero-top { padding: 0 1.2rem; }
   .hero-title { font-size: clamp(1.8rem, 8vw, 3rem); }
   .cards-layer { padding: 0.5rem 0.8rem; gap: 0.6rem; justify-content: flex-start; padding-right: 120px; }
-  .card { width: 140px; }
-  .card-thumb { height: 80px; }
+  .card { width: 30vw; min-width: 110px; }
   .card-content { padding: 0.4rem 0.6rem 0.6rem; }
   .card h3 { font-size: 0.7rem; -webkit-line-clamp: 1; }
   .card p { font-size: 0.5rem; -webkit-line-clamp: 1; }
@@ -628,11 +626,17 @@ onMounted(async () => {
   .hero-bottom { padding: 0.5rem 1.2rem 0.8rem; gap: 1rem; flex-wrap: wrap; }
   .hero-desc { font-size: 0.6rem; }
   .more-btn { font-size: 0.65rem; padding: 0.4rem 1rem; }
+  .sheet-panel { height: 75vh; max-height: 75vh; }
+  .sheet-body { overflow-x: auto; overflow-y: hidden; }
+  .sheet-header { padding: 0 1.2rem 0.6rem; gap: 0.5rem; }
+  .sheet-header-top { gap: 0.5rem; }
+  .sheet-header h2 { font-size: 1rem; }
+  .search-box { flex: -1; min-width: 0; }
+  .search-input { width: 60px; flex: 1; min-width: 0; }
   .nav-dock { right: 0.3rem; padding: 0.4rem; border-radius: 10px; }
   .nav-dock-header { font-size: 0.5rem; padding: 0.2rem 0.3rem 0.4rem; }
   .nav-dock-list { gap: 0.3rem; }
-  .nav-card { width: 93px; }
-  .nav-card-thumb { height: 52px; }
+  .nav-card { width: 19.2vw; min-width: 75px; }
   .nav-card-content { padding: 0.3rem 0.4rem 0.4rem; }
   .nav-card-tag { font-size: 0.45rem; }
   .nav-card-content h3 { font-size: 0.45rem; -webkit-line-clamp: 1; }
@@ -646,22 +650,22 @@ onMounted(async () => {
   .hero-eyebrow { margin-bottom: 0.4rem; }
   .hero-title { font-size: 1.6rem; }
   .cards-layer { padding: 0.3rem 0.5rem; gap: 0.4rem; padding-right: 100px; }
-  .card { width: 120px; }
-  .card-thumb { height: 65px; }
+  .card { width: 40vw; min-width: 95px; }
   .card-content { padding: 0.3rem 0.5rem 0.5rem; gap: 0.1rem; }
   .card-num { font-size: 0.4rem; }
   .card h3 { font-size: 0.6rem; }
   .card p { display: none; }
   .hero-bottom { padding: 0.4rem 0.8rem 0.6rem; flex-direction: column; gap: 0.4rem; }
-  .sheet-body { padding: 0 1rem 1rem; }
-  .sheet-header { padding: 0 1rem 0.8rem; }
+  .sheet-panel { height: 35vh; max-height: 35vh; }
+  .sheet-body { padding: 0 1rem 1rem; overflow-x: auto; overflow-y: hidden; }
+  .sheet-header { padding: 0 0.8rem 0.5rem; gap: 0.4rem; }
+  .sheet-header h2 { font-size: 0.95rem; }
   .sheet-footer { padding: 0.6rem 1rem; }
-  .posts-grid-inner > * { width: 240px; min-width: 240px; }
+  .posts-grid-inner > * { width: 40vw; min-width: 140px; }
   .nav-dock { right: 0.2rem; padding: 0.3rem; border-radius: 8px; }
   .nav-dock-header { font-size: 0.4rem; padding: 0.15rem 0.2rem 0.3rem; margin-bottom: 0.3rem; }
   .nav-dock-list { gap: 0.25rem; }
-  .nav-card { width: 80px; }
-  .nav-card-thumb { height: 44px; }
+  .nav-card { width: 21.3vw; min-width: 65px; }
   .nav-card-content h3 { display: none; }
 }
 </style>

@@ -36,7 +36,11 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.about-page { min-height: 100vh; display: flex; flex-direction: column; }
-.about { max-width: 780px; padding-top: 3rem; padding-bottom: 4rem; flex: 1; }
+.about-page { min-height: 100vh; display: flex; flex-direction: column; padding-top: 4.5rem; }
+.about { max-width: 780px; padding-top: 3rem; padding-bottom: 4rem; flex: 1; overflow-x: hidden; }
 .about h1 { font-size: 2rem; font-weight: 300; margin-bottom: 2rem; }
+@media (max-width: 768px) {
+  .about { width: 100%; max-width: 100%; }
+  .about-content { max-width: calc(100vw - 2rem); }
+}
 </style>

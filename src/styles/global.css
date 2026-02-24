@@ -57,7 +57,7 @@ html.light {
   --scrollbar-hover: rgba(0,0,0,0.2);
 }
 
-html { font-size: 16px; scroll-behavior: smooth; }
+html { font-size: 16px; scroll-behavior: smooth; overflow-x: hidden; width: 100%; }
 body {
   font-family: var(--font);
   background: var(--bg);
@@ -65,6 +65,8 @@ body {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   transition: background 0.4s, color 0.4s;
+  overflow-x: hidden;
+  width: 100%;
 }
 a { color: inherit; text-decoration: none; }
 img { max-width: 100%; display: block; }
@@ -81,3 +83,41 @@ img { max-width: 100%; display: block; }
 @media (max-width: 768px) {
   .container { padding: 0 1rem; }
 }
+
+/* Markdown body */
+.markdown-body { font-size: 0.95rem; line-height: 1.8; color: var(--text); overflow-wrap: break-word; word-break: break-word; max-width: 100%; overflow-x: hidden; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3 { margin: 2rem 0 1rem; font-weight: 600; }
+.markdown-body h2 { font-size: 1.5rem; }
+.markdown-body h3 { font-size: 1.2rem; }
+.markdown-body p { margin-bottom: 1.2rem; max-width: 100%; }
+.markdown-body a { color: var(--accent); border-bottom: 1px solid transparent; transition: border-color 0.3s; }
+.markdown-body a:hover { border-bottom-color: var(--accent); }
+.markdown-body img { border-radius: var(--radius-sm); margin: 1.5rem 0; cursor: zoom-in; transition: opacity 0.2s; max-width: 100%; height: auto; }
+.markdown-body img:hover { opacity: 0.9; }
+.markdown-body pre { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.2rem; overflow-x: auto; margin: 1.5rem 0; max-width: 100%; }
+.markdown-body code { font-size: 0.85em; font-family: 'Fira Code', monospace; }
+.markdown-body :not(pre) > code { background: var(--bg-input); padding: 0.15em 0.4em; border-radius: 4px; }
+.markdown-body blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; margin: 1.5rem 0; color: var(--text-dim); }
+.markdown-body ul, .markdown-body ol { padding-left: 1.5rem; margin-bottom: 1.2rem; }
+.markdown-body li { margin-bottom: 0.4rem; }
+.markdown-body hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+.markdown-body table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; display: block; overflow-x: auto; }
+.markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 0.6rem 1rem; text-align: left; white-space: nowrap; }
+.markdown-body th { background: var(--bg-surface); font-weight: 600; }
+/* Video embed */
+.markdown-body .video-embed { position: relative; width: 100%; padding-bottom: 56.25%; margin: 1.5rem 0; border-radius: var(--radius-sm); overflow: hidden; background: #000; }
+.markdown-body .video-embed iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+/* Light theme overrides */
+html.light .markdown-body pre { background: #f6f8fa; border-color: #d0d7de; }
+html.light .markdown-body pre code { color: #24292f; }
+html.light .markdown-body :not(pre) > code { background: rgba(175,184,193,0.2); color: #24292f; }
+html.light .hljs { background: #f6f8fa; color: #24292f; }
+html.light .hljs-keyword { color: #cf222e; }
+html.light .hljs-string { color: #0a3069; }
+html.light .hljs-comment { color: #6e7781; }
+html.light .hljs-function .hljs-title, html.light .hljs-title.function_ { color: #8250df; }
+html.light .hljs-number { color: #0550ae; }
+html.light .hljs-built_in { color: #0550ae; }
+html.light .hljs-attr { color: #0550ae; }
+html.light .hljs-selector-class { color: #0550ae; }
+html.light .hljs-type { color: #953800; }

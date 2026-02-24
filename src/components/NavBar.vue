@@ -45,7 +45,7 @@ watch(menuOpen, async (val) => {
 <style scoped>
 .navbar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 1.5rem 3rem; position: sticky; top: 0; z-index: 100;
+  padding: 1.5rem 3rem; position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   background: var(--nav-glass); backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border); transition: background 0.4s;
   padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
@@ -86,4 +86,5 @@ watch(menuOpen, async (val) => {
   .nav-links { display: none; }
   .nav-toggle { display: block; }
 }
+
 </style>

@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import router from './router'
+import router, { setSiteTitle } from './router'
 import './styles/global.css'
 import { useTheme } from './composables/useTheme'
 import { getSiteSettings } from './api'
@@ -23,7 +23,9 @@ getSiteSettings().then(data => {
   }
   // Page title
   if (data.pageTitle || data.siteName) {
-    document.title = data.pageTitle || data.siteName
+    const title = data.pageTitle || data.siteName
+    document.title = title
+    setSiteTitle(title)
   }
   // SEO meta tags
   if (data.seoEnabled) {

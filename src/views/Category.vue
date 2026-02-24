@@ -21,6 +21,7 @@ import PostCard from '../components/PostCard.vue'
 import Footer from '../components/Footer.vue'
 import Loading from '../components/Loading.vue'
 import { getPostsByCategory, getSiteSettings } from '../api'
+import { setPageTitle } from '../router'
 
 const route = useRoute()
 const posts = ref([])
@@ -35,6 +36,7 @@ async function load() {
   try {
     const data = await getPostsByCategory(route.params.name)
     posts.value = data.posts || []
+    setPageTitle(`分类: ${route.params.name}`)
   } catch (e) { console.error(e) }
   finally { loading.value = false }
 }
@@ -53,7 +55,7 @@ watch(() => route.params.name, load)
 </script>
 
 <style scoped>
-.category-page { min-height: 100vh; display: flex; flex-direction: column; }
+.category-page { min-height: 100vh; display: flex; flex-direction: column; padding-top: 4.5rem; }
 .cat-content { flex: 1; }
 .cat-title { font-size: 1.5rem; font-weight: 500; margin-bottom: 2rem; }
 .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
