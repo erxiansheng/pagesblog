@@ -27,26 +27,27 @@ const formatDate = (ts) => {
 .post-card {
   display: flex; flex-direction: column; background: var(--bg-surface);
   border: 1px solid var(--border); border-radius: var(--radius);
-  overflow: hidden; transition: border-color 0.35s var(--ease), transform 0.35s var(--ease);
+  overflow: hidden; transition: border-color 0.35s var(--ease), transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
   position: relative; will-change: transform; transform: translateZ(0);
-  height: 100%; aspect-ratio: 4/4; width: auto;
+  height: 100%; width: auto;
 }
 .post-card:hover {
   border-color: var(--border-hover);
   transform: translateY(-4px) translateZ(0);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
-.card-cover { flex: 0 0 60%; overflow: hidden; }
+.card-cover { flex: 0 0 58%; overflow: hidden; min-height: 0; }
 .card-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s var(--ease); will-change: transform; transform: translateZ(0); }
 .post-card:hover .card-cover img { transform: scale(1.05) translateZ(0); }
-.card-body { padding: 0.8rem 0.9rem; flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
-.card-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.6rem; }
+.card-body { padding: 0.6rem 0.75rem; flex: 1; display: flex; flex-direction: column; gap: 0.35rem; overflow: hidden; min-height: 0; }
+.card-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.65rem; flex-shrink: 0; }
 .card-category {
   color: var(--accent); background: rgba(201,169,110,0.1);
-  padding: 0.1rem 0.5rem; border-radius: 20px; font-weight: 500;
+  padding: 0.15em 0.55em; border-radius: 20px; font-weight: 500; white-space: nowrap;
 }
-.card-date { color: var(--text-muted); }
-.card-title { font-size: 0.85rem; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.card-summary { font-size: 0.65rem; color: var(--text-dim); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card-date { color: var(--text-muted); white-space: nowrap; }
+.card-title { font-size: 0.8rem; font-weight: 600; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex-shrink: 0; }
+.card-summary { font-size: 0.7rem; color: var(--text-dim); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 0; }
 .card-arrow {
   position: absolute; top: 0.6rem; right: 0.6rem; font-size: 0.8rem;
   color: var(--text-muted); transition: all 0.3s var(--ease);
