@@ -12,7 +12,7 @@ const { isDark, toggleTheme } = useTheme()
 <style scoped>
 .theme-toggle {
   background: var(--bg-input); border: 1px solid var(--border); border-radius: 50%;
-  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  width: 2.2rem; height: 2.2rem; display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: all 0.3s; font-size: 0.85rem;
 }
 .theme-toggle:hover { border-color: var(--accent); transform: rotate(20deg); }

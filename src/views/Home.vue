@@ -36,7 +36,7 @@
               </span>
             </h1>
           </div>
-          <div class="cards-layer" @mousemove="onCardMouseMove" @mouseleave="resetCards" ref="cardsLayerRef">
+          <div class="cards-layer" @mousemove="(e) => { onCardMouseMove(e); onCardsDragMove(e) }" @mouseleave="() => { resetCards(); onCardsDragEnd() }" @mousedown="onCardsDragStart" @mouseup="onCardsDragEnd" ref="cardsLayerRef">
             <router-link v-for="(post, i) in homePosts" :key="'p'+post.id"
               :to="`/post/${post.id}`" class="card" :ref="el => cardEls.push(el)">
               <div class="card-thumb" v-if="post.cover"><img :src="post.cover" :alt="post.title" loading="lazy"></div>
@@ -301,13 +301,13 @@ function runEntrance() {
 
 const cardEls = ref([])
 const cardsLayerRef = ref(null)
-const MAX_SCALE = 1.35, RANGE = 250
+const MAX_SCALE = 1.2625, RANGE = 250
 let mouseX = -9999, rafId = null
 
 // Nav dock magnification
 const navCardEls = ref([])
 const navDockListRef = ref(null)
-const NAV_MAX_SCALE = 1.3, NAV_RANGE = 120
+const NAV_MAX_SCALE = 1.225, NAV_RANGE = 120
 let navMouseY = -9999, navRafId = null
 
 function onNavDockMouseMove(e) {
@@ -326,7 +326,7 @@ function updateNavDock() {
     const ratio = 1 - dist / NAV_RANGE
     const curve = Math.cos((1 - ratio) * Math.PI * 0.5)
     const scale = 1 + (NAV_MAX_SCALE - 1) * curve
-    const shift = curve * 10
+    const shift = curve * 7.5
     el.style.transform = `scale(${scale.toFixed(3)}) translateX(${(-shift).toFixed(1)}px)`
   })
 }
@@ -355,7 +355,7 @@ function updateCards() {
     const ratio = 1 - dist / RANGE
     const curve = Math.cos((1 - ratio) * Math.PI * 0.5)
     const scale = 1 + (MAX_SCALE - 1) * curve
-    const lift = curve * 14
+    const lift = curve * 10.5
     el.style.transform = `scale(${scale.toFixed(3)}) translateY(${(-lift).toFixed(1)}px)`
   })
 }
@@ -368,13 +368,50 @@ function resetCards() {
   })
 }
 
+// Cards layer drag scroll
+let cardsDragging = false, cardsDragStartX = 0, cardsScrollLeft = 0
+
+function onCardsWheel(e) {
+  const el = cardsLayerRef.value
+  if (!el) return
+  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    e.preventDefault()
+    el.scrollLeft += e.deltaY
+  }
+}
+function onCardsDragStart(e) {
+  const el = cardsLayerRef.value
+  if (!el) return
+  cardsDragging = true
+  cardsDragStartX = e.pageX - el.offsetLeft
+  cardsScrollLeft = el.scrollLeft
+  el.style.cursor = 'grabbing'
+}
+function onCardsDragMove(e) {
+  if (!cardsDragging) return
+  const el = cardsLayerRef.value
+  if (!el) return
+  e.preventDefault()
+  const x = e.pageX - el.offsetLeft
+  el.scrollLeft = cardsScrollLeft - (x - cardsDragStartX)
+}
+function onCardsDragEnd() {
+  cardsDragging = false
+  const el = cardsLayerRef.value
+  if (el) el.style.cursor = ''
+}
+
 onMounted(async () => {
   document.body.style.overflow = 'hidden'
+  nextTick(() => {
+    if (cardsLayerRef.value) {
+      cardsLayerRef.value.addEventListener('wheel', onCardsWheel, { passive: false })
+    }
+  })
   try {
     const [postsData, catsData, settingsData, linksData] = await Promise.all([
       getPosts(1, 50, { showOnHome: true }), getCategories(), getSiteSettings(), getNavLinks()
     ])
-    // 首页卡片：后端已过滤只返回 showOnHome 的文章
     homePosts.value = postsData.posts || []
     categories.value = catsData.categories || []
     settings.value = settingsData || {}
@@ -386,6 +423,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.body.style.overflow = ''
+  if (cardsLayerRef.value) {
+    cardsLayerRef.value.removeEventListener('wheel', onCardsWheel)
+  }
 })
 </script>
 
@@ -396,9 +436,9 @@ onUnmounted(() => {
 .loader-inner { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
 .loader-logo { font-size: 1.4rem; font-weight: 600; letter-spacing: 0.08em; }
 .loader-dot { color: var(--accent); }
-.loader-bar-wrap { width: 220px; height: 2px; background: var(--loader-bar-bg); border-radius: 2px; overflow: hidden; }
-.loader-bar { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s var(--ease); }
-.loader-meta { display: flex; justify-content: space-between; width: 220px; }
+.loader-bar-wrap { width: 15rem; height: 0.14rem; background: var(--loader-bar-bg); border-radius: 0.14rem; overflow: hidden; }
+.loader-bar { height: 100%; background: var(--accent); border-radius: 0.14rem; transition: width 0.3s var(--ease); }
+.loader-meta { display: flex; justify-content: space-between; width: 15rem; }
 .loader-hint { font-size: 0.6rem; letter-spacing: 0.15em; color: var(--loader-hint); }
 .loader-text { font-size: 0.6rem; letter-spacing: 0.2em; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .page-layer { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; pointer-events: none; }
@@ -415,22 +455,23 @@ onUnmounted(() => {
 .hero-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
 .hero-top { padding: 0 3rem; flex-shrink: 0; }
-.hero-eyebrow { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem; opacity: 0; transform: translateY(20px); }
-.hero-eyebrow .line { width: 30px; height: 1px; background: var(--text-dim); }
+.hero-eyebrow { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem; opacity: 0; transform: translateY(1.4rem); }
+.hero-eyebrow .line { width: 2.1rem; height: 1px; background: var(--text-dim); }
 .hero-eyebrow span { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); }
-.hero-title { font-size: clamp(2.5rem, 6vw, 5.5rem); font-weight: 300; line-height: 1.2; letter-spacing: -0.03em; }
+.hero-title { font-size: 3.2rem; font-weight: 300; line-height: 1.2; letter-spacing: -0.03em; }
 .title-line { display: block; overflow: hidden; }
 .title-word { display: inline-block; transform: translateY(110%); }
 
 .cards-layer {
   flex: 1; display: flex; align-items: flex-end; justify-content: center;
-  gap: 2vw; padding: 2rem 8% 1rem; pointer-events: none;
-  overflow: hidden; scrollbar-width: none;
+  gap: 1.2rem; padding: 2rem 8% 1rem; pointer-events: none;
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+  cursor: grab; -webkit-overflow-scrolling: touch;
 }
 .cards-layer::-webkit-scrollbar { display: none; }
 .card {
-  pointer-events: auto; position: relative; width: 11.2vw; min-width: 100px; flex-shrink: 0;
-  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px;
+  pointer-events: auto; position: relative; width: 10rem; min-width: 7rem; flex-shrink: 0;
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 1rem;
   display: flex; flex-direction: column; overflow: hidden;
   transform-origin: bottom center; transition: background 0.3s, border-color 0.3s;
   will-change: transform;
@@ -451,7 +492,7 @@ onUnmounted(() => {
   position: fixed; right: 1.2rem; top: 50%; transform: translateY(-50%) translateX(0);
   display: flex; flex-direction: column; z-index: 100;
   pointer-events: auto;
-  border-radius: 14px;
+  border-radius: 1rem;
   padding: 0.6rem;
   max-height: 80vh;
   opacity: 0;
@@ -460,7 +501,7 @@ onUnmounted(() => {
 .nav-dock::before {
   content: ''; position: absolute; inset: 0; z-index: -1;
   background: rgba(14,14,20,0.35); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid var(--border); border-radius: 14px;
+  border: 1px solid var(--border); border-radius: 1rem;
   pointer-events: none;
 }
 :global(html.light) .nav-dock::before {
@@ -479,8 +520,8 @@ onUnmounted(() => {
 }
 .nav-dock-list::-webkit-scrollbar { display: none; }
 .nav-card {
-  position: relative; width: 7.2vw; min-width: 65px; flex-shrink: 0;
-  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px;
+  position: relative; width: 6.5rem; min-width: 4.5rem; flex-shrink: 0;
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 0.7rem;
   display: flex; flex-direction: column; overflow: hidden;
   transition: background 0.3s, border-color 0.3s;
   transform-origin: right center; will-change: transform;
@@ -499,7 +540,7 @@ onUnmounted(() => {
 .hero-bottom { padding: 0.6rem 3rem 1.2rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 2rem; }
 .hero-desc { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.15em; opacity: 0; transform: translateY(10px); }
 .more-btn {
-  display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.2rem; border-radius: 24px;
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.2rem; border-radius: 1.7rem;
   background: rgba(201,169,110,0.12); border: 1px solid rgba(201,169,110,0.3);
   color: var(--accent); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.06em;
   cursor: pointer; font-family: var(--font); transition: all 0.3s var(--ease); opacity: 0;
@@ -507,7 +548,7 @@ onUnmounted(() => {
 .more-btn:hover { background: rgba(201,169,110,0.22); border-color: var(--accent); transform: translateY(-2px); }
 .more-icon {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 18px; height: 18px; border-radius: 50%; background: rgba(201,169,110,0.2);
+  width: 1.25rem; height: 1.25rem; border-radius: 50%; background: rgba(201,169,110,0.2);
   font-size: 0.65rem; animation: bounceDown 2s infinite;
 }
 @keyframes bounceDown { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
@@ -516,7 +557,7 @@ onUnmounted(() => {
 .sheet-panel {
   position: relative;
   border-top: 1px solid rgba(255,255,255,0.1);
-  border-radius: 20px 20px 0 0; height: 36vh; max-height: 36vh; display: flex; flex-direction: column;
+  border-radius: 1.4rem 1.4rem 0 0; height: 36vh; max-height: 36vh; display: flex; flex-direction: column;
   animation: sheetUp 0.4s var(--ease); isolation: isolate;
   overflow: hidden;
 }
@@ -524,7 +565,7 @@ onUnmounted(() => {
   content: ''; position: absolute; inset: 0; z-index: -1;
   background: rgba(14,14,20,0.35); backdrop-filter: blur(32px) saturate(1.6);
   -webkit-backdrop-filter: blur(32px) saturate(1.6);
-  border-radius: 20px 20px 0 0; pointer-events: none;
+  border-radius: 1.4rem 1.4rem 0 0; pointer-events: none;
 }
 :global(html.light) .sheet-panel {
   border-top: 1px solid rgba(0,0,0,0.08);
@@ -547,7 +588,7 @@ onUnmounted(() => {
 .search-icon { font-size: 11px; opacity: 0.5; }
 .search-input {
   background: transparent; border: none; outline: none; color: var(--text);
-  font-size: 11px; font-family: var(--font); width: 100px;
+  font-size: 12px; font-family: var(--font); width: 100px;
 }
 .search-input::placeholder { color: var(--text-muted); }
 .search-clear {
@@ -561,11 +602,11 @@ onUnmounted(() => {
   font-weight: 500; transition: opacity 0.2s; white-space: nowrap;
 }
 .search-btn:hover { opacity: 0.8; }
-.sheet-empty { text-align: center; color: var(--text-muted); font-size: 0.85rem; height: 100%; display: flex; align-items: center; justify-content: center; }
+.sheet-empty { text-align: center; color: var(--text-muted); font-size: 13px; height: 100%; display: flex; align-items: center; justify-content: center; }
 .sheet-loading, .sheet-end {
   display: flex; align-items: center; justify-content: center;
-  min-width: 120px; flex-shrink: 0; color: var(--text-muted); font-size: 0.75rem;
-  padding: 0 1rem;
+  min-width: 120px; flex-shrink: 0; color: var(--text-muted); font-size: 12px;
+  padding: 0 16px;
 }
 /* 内容切换过渡 */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.25s ease; }
@@ -574,7 +615,7 @@ onUnmounted(() => {
 .card-fade-enter-active { transition: opacity 0.3s ease, transform 0.3s ease; }
 .card-fade-enter-from { opacity: 0; transform: translateY(12px); }
 .posts-grid-inner { display: flex; gap: 1rem; flex-wrap: nowrap; height: 100%; align-items: stretch; }
-.posts-grid-inner > :deep(.post-card) { width: 220px; height: 100%; flex-shrink: 0; }
+.posts-grid-inner > :deep(.post-card) { width: calc(22vh); height: 100%; flex-shrink: 0; }
 .category-tabs { display: flex; gap: 5px; flex-wrap: wrap; }
 .category-tabs button {
   background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
@@ -614,66 +655,45 @@ onUnmounted(() => {
 
 @media (max-width: 1024px) {
   .cards-layer { padding: 0.5rem 1.5rem; gap: 1rem; }
-  .card { width: 14.4vw; }
+  .card { width: 9rem; }
   .nav-dock { right: 0.5rem; padding: 0.5rem; }
-  .nav-card { width: 6.4vw; }
+  .nav-card { width: 5.5rem; }
 }
 @media (max-width: 768px) {
   .nav { padding: 0.8rem 1.2rem; }
   .nav-links { gap: 1.2rem; }
-  .nav-links a { font-size: 0.6rem; }
   .hero-top { padding: 0 1.2rem; }
-  .hero-title { font-size: clamp(1.8rem, 8vw, 3rem); }
-  .cards-layer { padding: 0.5rem 0.8rem; gap: 0.6rem; justify-content: flex-start; padding-right: 120px; }
-  .card { width: 30vw; min-width: 110px; }
+  .cards-layer { padding: 0.5rem 0.8rem; gap: 0.6rem; justify-content: flex-start; padding-right: 1rem; }
+  .card { width: 8rem; min-width: 7.5rem; }
   .card-content { padding: 0.4rem 0.6rem 0.6rem; }
-  .card h3 { font-size: 0.7rem; -webkit-line-clamp: 1; }
-  .card p { font-size: 0.5rem; -webkit-line-clamp: 1; }
-  .card-arrow { top: 0.4rem; right: 0.4rem; font-size: 0.65rem; }
+  .card h3 { -webkit-line-clamp: 1; }
+  .card p { -webkit-line-clamp: 1; }
+  .card-arrow { top: 0.4rem; right: 0.4rem; }
   .hero-bottom { padding: 0.5rem 1.2rem 0.8rem; gap: 1rem; flex-wrap: wrap; }
-  .hero-desc { font-size: 0.6rem; }
-  .more-btn { font-size: 0.65rem; padding: 0.4rem 1rem; }
   .sheet-panel { height: 75vh; max-height: 75vh; }
   .sheet-body { overflow-x: auto; overflow-y: hidden; }
-  .sheet-header { padding: 0 1.2rem 0.5vh; gap: 0.4vh; }
-  .sheet-header-top { gap: 0.5rem; }
-  .sheet-header h2 { font-size: 1rem; }
+  .sheet-header { padding: 0 16px 4px; gap: 3px; }
+  .sheet-header-top { gap: 8px; }
   .search-box { flex: -1; min-width: 0; }
   .search-input { width: 60px; flex: 1; min-width: 0; }
-  .posts-grid-inner > :deep(.post-card) { width: 220px; }
-  .nav-dock { right: 0.3rem; padding: 0.4rem; border-radius: 10px; }
-  .nav-dock-header { font-size: 0.5rem; padding: 0.2rem 0.3rem 0.4rem; }
-  .nav-dock-list { gap: 0.3rem; }
-  .nav-card { width: 19.2vw; min-width: 75px; }
-  .nav-card-content { padding: 0.3rem 0.4rem 0.4rem; }
-  .nav-card-tag { font-size: 0.45rem; }
-  .nav-card-content h3 { font-size: 0.45rem; -webkit-line-clamp: 1; }
-  .nav-card-arrow { font-size: 0.45rem; top: 0.3rem; right: 0.3rem; }
+  .posts-grid-inner > :deep(.post-card) { width: calc(45vh); }
+  .nav-dock { display: none; }
 }
 @media (max-width: 480px) {
   .nav { padding: 0.6rem 0.8rem; }
-  .nav-logo { font-size: 0.85rem; }
   .nav-links { display: none; }
   .hero-top { padding: 0 0.8rem; }
   .hero-eyebrow { margin-bottom: 0.4rem; }
-  .hero-title { font-size: 1.6rem; }
-  .cards-layer { padding: 0.3rem 0.5rem; gap: 0.4rem; padding-right: 100px; }
-  .card { width: 40vw; min-width: 95px; }
+  .cards-layer { padding: 0.3rem 0.5rem; gap: 0.4rem; }
+  .card { width: 7rem; min-width: 6.5rem; }
   .card-content { padding: 0.3rem 0.5rem 0.5rem; gap: 0.1rem; }
-  .card-num { font-size: 0.4rem; }
-  .card h3 { font-size: 0.6rem; }
   .card p { display: none; }
   .hero-bottom { padding: 0.4rem 0.8rem 0.6rem; flex-direction: column; gap: 0.4rem; }
   .sheet-panel { height: 35vh; max-height: 35vh; }
-  .sheet-body { padding: 0 1rem 1rem; overflow-x: auto; overflow-y: hidden; }
-  .sheet-header { padding: 0 0.8rem 0.5rem; gap: 0.4rem; }
-  .sheet-header h2 { font-size: 0.95rem; }
-  .sheet-footer { padding: 0.6rem 1rem; }
-  .posts-grid-inner > :deep(.post-card) { width: 160px; }
-  .nav-dock { right: 0.2rem; padding: 0.3rem; border-radius: 8px; }
-  .nav-dock-header { font-size: 0.4rem; padding: 0.15rem 0.2rem 0.3rem; margin-bottom: 0.3rem; }
-  .nav-dock-list { gap: 0.25rem; }
-  .nav-card { width: 21.3vw; min-width: 65px; }
-  .nav-card-content h3 { display: none; }
+  .sheet-body { padding: 0 12px 12px; overflow-x: auto; overflow-y: hidden; }
+  .sheet-header { padding: 0 12px 4px; gap: 3px; }
+  .sheet-footer { padding: 5px 12px; }
+  .posts-grid-inner > :deep(.post-card) { width: calc(22vh); }
+  .nav-dock { display: none; }
 }
 </style>

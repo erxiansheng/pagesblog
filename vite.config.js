@@ -18,8 +18,14 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8788',
-        changeOrigin: true
+        target: 'https://testblog.188np.cn',
+        changeOrigin: true,
+        secure: false
+      },
+      '/uploads': {
+        target: 'https://testblog.188np.cn',
+        changeOrigin: true,
+        secure: false
       }
     }
   }

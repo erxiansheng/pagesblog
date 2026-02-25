@@ -59,14 +59,14 @@ watch(menuOpen, async (val) => {
   transition: color 0.3s; text-transform: uppercase;
 }
 .nav-links a:hover, .nav-links a.router-link-active { color: var(--text); }
-.nav-toggle { display: none; background: none; border: none; cursor: pointer; width: 24px; height: 20px; position: relative; }
+.nav-toggle { display: none; background: none; border: none; cursor: pointer; width: 1.7rem; height: 1.4rem; position: relative; }
 .nav-toggle span, .nav-toggle span::before, .nav-toggle span::after {
-  display: block; width: 100%; height: 2px; background: var(--text); position: absolute;
+  display: block; width: 100%; height: 0.14rem; background: var(--text); position: absolute;
   transition: 0.3s var(--ease);
 }
-.nav-toggle span { top: 9px; }
-.nav-toggle span::before { content: ''; top: -7px; }
-.nav-toggle span::after { content: ''; top: 7px; }
+.nav-toggle span { top: 0.63rem; }
+.nav-toggle span::before { content: ''; top: -0.5rem; }
+.nav-toggle span::after { content: ''; top: 0.5rem; }
 .nav-toggle span.open { background: transparent; }
 .nav-toggle span.open::before { top: 0; transform: rotate(45deg); }
 .nav-toggle span.open::after { top: 0; transform: rotate(-45deg); }

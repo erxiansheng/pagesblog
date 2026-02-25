@@ -58,6 +58,6 @@ watch(() => route.params.name, load)
 .category-page { min-height: 100vh; display: flex; flex-direction: column; padding-top: 4.5rem; }
 .cat-content { flex: 1; }
 .cat-title { font-size: 1.5rem; font-weight: 500; margin-bottom: 2rem; }
-.posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+.posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); gap: 1.5rem; }
 .empty { text-align: center; padding: 4rem 0; color: var(--text-muted); }
 </style>

@@ -17,8 +17,8 @@
   --border-hover: rgba(255,255,255,0.18);
   --danger: #e74c3c;
   --success: #2ecc71;
-  --radius: 12px;
-  --radius-sm: 8px;
+  --radius: 0.85rem;
+  --radius-sm: 0.55rem;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --font: 'Inter', 'Noto Sans SC', -apple-system, sans-serif;
   --card-glass: rgba(14,14,20,0.75);
@@ -73,13 +73,13 @@ img { max-width: 100%; display: block; }
 ::selection { background: var(--accent); color: #fff; }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 0.4rem; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 0.2rem; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
 
 /* Utility */
-.container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+.container { max-width: 76rem; margin: 0 auto; padding: 0 2rem; }
 @media (max-width: 768px) {
   .container { padding: 0 1rem; }
 }
@@ -96,7 +96,7 @@ img { max-width: 100%; display: block; }
 .markdown-body img:hover { opacity: 0.9; }
 .markdown-body pre { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1.2rem; overflow-x: auto; margin: 1.5rem 0; max-width: 100%; }
 .markdown-body code { font-size: 0.85em; font-family: 'Fira Code', monospace; }
-.markdown-body :not(pre) > code { background: var(--bg-input); padding: 0.15em 0.4em; border-radius: 4px; }
+.markdown-body :not(pre) > code { background: var(--bg-input); padding: 0.1em 0.4em; border-radius: 0.28rem; }
 .markdown-body blockquote { border-left: 3px solid var(--accent); padding-left: 1rem; margin: 1.5rem 0; color: var(--text-dim); }
 .markdown-body ul, .markdown-body ol { padding-left: 1.5rem; margin-bottom: 1.2rem; }
 .markdown-body li { margin-bottom: 0.4rem; }

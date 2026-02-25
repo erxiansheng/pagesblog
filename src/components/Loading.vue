@@ -7,7 +7,7 @@
 <style scoped>
 .loading { display: flex; justify-content: center; padding: 4rem 0; }
 .loading-spinner {
-  width: 32px; height: 32px; border: 2px solid var(--border);
+  width: 2.2rem; height: 2.2rem; border: 0.14rem solid var(--border);
   border-top-color: var(--accent); border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
