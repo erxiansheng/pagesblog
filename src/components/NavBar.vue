@@ -18,7 +18,7 @@
       <div v-if="menuOpen" class="nav-mobile" @click="menuOpen = false" :style="{ top: navbarHeight + 'px' }">
         <router-link to="/">首页</router-link>
         <router-link to="/about">关于</router-link>
-        <ThemeToggle />
+        <a v-for="link in externalLinks" :key="link.url" :href="link.url" target="_blank" rel="noopener">{{ link.label }}</a>
       </div>
     </Transition>
   </nav>

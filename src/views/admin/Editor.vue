@@ -249,6 +249,7 @@ async function save(publish) {
 .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 1rem; }
 
 @media (max-width: 600px) {
+  .editor-page { max-width: 100%; overflow-x: hidden; }
   .form-row { flex-direction: column; }
   .editor-body.split { flex-direction: column; }
   .editor-body.split .editor-textarea, .editor-preview { width: 100%; }

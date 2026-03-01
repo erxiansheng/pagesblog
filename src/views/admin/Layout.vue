@@ -76,7 +76,7 @@ const logout = () => { localStorage.removeItem('blog_token'); router.push('/admi
 </script>
 
 <style scoped>
-.admin-layout { display: flex; min-height: 100vh; background: var(--bg); }
+.admin-layout { display: flex; min-height: 100vh; background: var(--bg); overflow-x: hidden; }
 .sidebar {
   width: 260px; display: flex; flex-direction: column; flex-shrink: 0;
   position: fixed; top: 0; bottom: 0; left: 0; z-index: 200;
@@ -130,9 +130,9 @@ const logout = () => { localStorage.removeItem('blog_token'); router.push('/admi
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); }
-  .admin-main { margin-left: 0; }
+  .admin-main { margin-left: 0; width: 100%; overflow-x: hidden; }
   .admin-topbar { display: flex; align-items: center; }
   .admin-overlay { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 199; }
-  .admin-content { padding: 1.2rem; }
+  .admin-content { padding: 1.2rem; width: 100%; max-width: 100%; overflow-x: hidden; }
 }
 </style>

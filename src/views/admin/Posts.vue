@@ -223,6 +223,7 @@ onMounted(async () => {
 .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .page-info { font-size: 0.8rem; color: var(--text-muted); }
 @media (max-width: 600px) {
+  .posts-manage { overflow-x: hidden; }
   .post-item { flex-wrap: wrap; gap: 0.5rem; }
   .col-sort { width: 48px; }
   .col-actions, .list-header .col-actions { width: auto; }

@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="page-layer">
-      <nav class="nav">
+      <nav class="nav" ref="homeNavRef">
         <div class="nav-logo">{{ settings.siteName || 'Blog' }}<span class="dot">.</span></div>
         <div class="nav-right">
           <div class="nav-links">
@@ -21,8 +21,18 @@
             <a v-for="link in socialLinks" :key="link.url" :href="link.url" target="_blank" rel="noopener">{{ link.label }}</a>
           </div>
           <ThemeToggle />
+          <button class="nav-toggle" @click="menuOpen = !menuOpen" aria-label="菜单">
+            <span :class="{ open: menuOpen }"></span>
+          </button>
         </div>
       </nav>
+      <Transition name="slide">
+        <div v-if="menuOpen" class="nav-mobile" @click="menuOpen = false" :style="{ top: navHeight + 'px' }">
+          <router-link to="/">首页</router-link>
+          <router-link to="/about">关于</router-link>
+          <a v-for="link in socialLinks" :key="link.url" :href="link.url" target="_blank" rel="noopener">{{ link.label }}</a>
+        </div>
+      </Transition>
       <div class="main-body">
         <div class="hero-area">
           <div class="hero-top">
@@ -142,6 +152,9 @@ const loaded = ref(false)
 const showAllArticles = ref(false)
 const settingsLoaded = ref(false)
 const year = new Date().getFullYear()
+const menuOpen = ref(false)
+const homeNavRef = ref(null)
+const navHeight = ref(48)
 
 // 弹窗分页状态
 const sheetPosts = ref([])
@@ -197,6 +210,12 @@ function clearSearch() {
 }
 
 watch(currentCategory, () => loadSheetPosts(true))
+watch(menuOpen, async (val) => {
+  if (val) {
+    await nextTick()
+    if (homeNavRef.value) navHeight.value = homeNavRef.value.getBoundingClientRect().height
+  }
+})
 watch(showAllArticles, (val) => {
   if (val) {
     loadSheetPosts(true)
@@ -450,6 +469,27 @@ onUnmounted(() => {
 .nav-links { display: flex; gap: 2rem; }
 .nav-links a { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); transition: color 0.3s; }
 .nav-links a:hover { color: var(--text); }
+.nav-toggle { display: none; background: none; border: none; cursor: pointer; width: 1.7rem; height: 1.4rem; position: relative; }
+.nav-toggle span, .nav-toggle span::before, .nav-toggle span::after {
+  display: block; width: 100%; height: 0.14rem; background: var(--text); position: absolute;
+  transition: 0.3s var(--ease);
+}
+.nav-toggle span { top: 0.63rem; }
+.nav-toggle span::before { content: ''; top: -0.5rem; }
+.nav-toggle span::after { content: ''; top: 0.5rem; }
+.nav-toggle span.open { background: transparent; }
+.nav-toggle span.open::before { top: 0; transform: rotate(45deg); }
+.nav-toggle span.open::after { top: 0; transform: rotate(-45deg); }
+.nav-mobile {
+  position: fixed; left: 0; right: 0;
+  background: var(--nav-glass); backdrop-filter: blur(20px);
+  display: flex; flex-direction: column; align-items: flex-start; z-index: 200;
+  border-bottom: 1px solid var(--border); padding: 0.5rem 0;
+}
+.nav-mobile a { font-size: 1rem; color: var(--text-dim); transition: color 0.3s; padding: 0.75rem 1.5rem; width: 100%; }
+.nav-mobile a:hover, .nav-mobile a.router-link-active { color: var(--text); background: var(--bg-card-hover); }
+.slide-enter-active, .slide-leave-active { transition: opacity 0.3s, transform 0.3s; }
+.slide-enter-from, .slide-leave-to { opacity: 0; transform: translateY(-10px); }
 
 .main-body { flex: 1; display: flex; min-height: 0; }
 .hero-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -470,7 +510,7 @@ onUnmounted(() => {
 }
 .cards-layer::-webkit-scrollbar { display: none; }
 .card {
-  pointer-events: auto; position: relative; width: 10rem; min-width: 7rem; flex-shrink: 0;
+  pointer-events: auto; position: relative; width: 12.5rem; min-width: 8.75rem; flex-shrink: 0;
   background: var(--bg-surface); border: 1px solid var(--border); border-radius: 1rem;
   display: flex; flex-direction: column; overflow: hidden;
   transform-origin: bottom center; transition: background 0.3s, border-color 0.3s;
@@ -493,8 +533,8 @@ onUnmounted(() => {
   display: flex; flex-direction: column; z-index: 100;
   pointer-events: auto;
   border-radius: 1rem;
-  padding: 0.6rem;
-  max-height: 80vh;
+  padding: 0.6rem 0.6rem;
+  max-height: 65vh;
   opacity: 0;
   overflow: visible;
 }
@@ -513,12 +553,11 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--border); margin-bottom: 0.5rem;
 }
 .nav-dock-list {
+  flex: 1; min-height: 0;
   display: flex; flex-direction: column; gap: 0.7rem;
-  overflow-y: auto; overflow-x: visible; scrollbar-width: none;
-  margin: -2rem -0.5rem -2rem -4rem;
-  padding: 2rem 0.5rem 2rem 4rem;
+  overflow: visible;
+  padding: 0.75rem 0;
 }
-.nav-dock-list::-webkit-scrollbar { display: none; }
 .nav-card {
   position: relative; width: 6.5rem; min-width: 4.5rem; flex-shrink: 0;
   background: var(--bg-surface); border: 1px solid var(--border); border-radius: 0.7rem;
@@ -655,8 +694,8 @@ onUnmounted(() => {
 
 @media (max-width: 1024px) {
   .cards-layer { padding: 0.5rem 1.5rem; gap: 1rem; }
-  .card { width: 9rem; }
-  .nav-dock { right: 0.5rem; padding: 0.5rem; }
+  .card { width: 11.25rem; }
+  .nav-dock { right: 0.5rem; padding: 0.5rem 0.3rem; }
   .nav-card { width: 5.5rem; }
 }
 @media (max-width: 768px) {
@@ -677,11 +716,14 @@ onUnmounted(() => {
   .search-box { flex: -1; min-width: 0; }
   .search-input { width: 60px; flex: 1; min-width: 0; }
   .posts-grid-inner > :deep(.post-card) { width: calc(45vh); }
-  .nav-dock { display: none; }
+  .nav-dock { right: 0.4rem; padding: 0.4rem 0.3rem; max-height: 70vh; }
+  .nav-dock-list { padding: 0.6rem 0; }
+  .nav-card { width: 4.5rem; }
 }
 @media (max-width: 480px) {
   .nav { padding: 0.6rem 0.8rem; }
   .nav-links { display: none; }
+  .nav-toggle { display: block; }
   .hero-top { padding: 0 0.8rem; }
   .hero-eyebrow { margin-bottom: 0.4rem; }
   .cards-layer { padding: 0.3rem 0.5rem; gap: 0.4rem; }
@@ -694,6 +736,9 @@ onUnmounted(() => {
   .sheet-header { padding: 0 12px 4px; gap: 3px; }
   .sheet-footer { padding: 5px 12px; }
   .posts-grid-inner > :deep(.post-card) { width: calc(22vh); }
-  .nav-dock { display: none; }
+  .nav-dock { right: 0.2rem; padding: 0.3rem; max-height: 65vh; }
+  .nav-dock-header { font-size: 0.5rem; letter-spacing: 0.05em; padding: 0.25rem 0.2rem 0.35rem; }
+  .nav-dock-list { padding: 0.5rem 0; gap: 0.4rem; }
+  .nav-card { width: 3.5rem; }
 }
 </style>
