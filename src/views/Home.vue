@@ -555,9 +555,11 @@ onUnmounted(() => {
 .nav-dock-list {
   flex: 1; min-height: 0;
   display: flex; flex-direction: column; gap: 0.7rem;
-  overflow: visible;
-  padding: 0.75rem 0;
+  overflow-y: auto; scrollbar-width: none;
+  padding: 0.75rem 0 0.75rem 2rem;
+  margin-left: -2rem;
 }
+.nav-dock-list::-webkit-scrollbar { display: none; }
 .nav-card {
   position: relative; width: 6.5rem; min-width: 4.5rem; flex-shrink: 0;
   background: var(--bg-surface); border: 1px solid var(--border); border-radius: 0.7rem;
@@ -717,7 +719,7 @@ onUnmounted(() => {
   .search-input { width: 60px; flex: 1; min-width: 0; }
   .posts-grid-inner > :deep(.post-card) { width: calc(45vh); }
   .nav-dock { right: 0.4rem; padding: 0.4rem 0.3rem; max-height: 70vh; }
-  .nav-dock-list { padding: 0.6rem 0; }
+  .nav-dock-list { padding: 0.6rem 0 0.6rem 1.5rem; margin-left: -1.5rem; }
   .nav-card { width: 4.5rem; }
 }
 @media (max-width: 480px) {
@@ -738,7 +740,7 @@ onUnmounted(() => {
   .posts-grid-inner > :deep(.post-card) { width: calc(22vh); }
   .nav-dock { right: 0.2rem; padding: 0.3rem; max-height: 65vh; }
   .nav-dock-header { font-size: 0.5rem; letter-spacing: 0.05em; padding: 0.25rem 0.2rem 0.35rem; }
-  .nav-dock-list { padding: 0.5rem 0; gap: 0.4rem; }
+  .nav-dock-list { padding: 0.5rem 0 0.5rem 1.5rem; margin-left: -1.5rem; gap: 0.4rem; }
   .nav-card { width: 3.5rem; }
 }
 </style>
