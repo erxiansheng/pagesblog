@@ -10,7 +10,7 @@
 
 ## 预览
 
-[[点击预览]](https://dasb.cn/)
+[[点击预览]](https://blog.dasb.cn/)
 
 ## 功能特性
 
